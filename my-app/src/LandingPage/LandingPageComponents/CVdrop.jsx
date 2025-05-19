@@ -50,7 +50,7 @@ const CVdrop = () => {
             CV added: {fileName}
           </span>
         ) : (
-          <span className="text-black sm:text-2xl lg:text-2xl px-4 text-center">
+          <span className="text-black text-xl px-4 text-center">
             Drag & drop your CV here or click to upload
           </span>
         )}
