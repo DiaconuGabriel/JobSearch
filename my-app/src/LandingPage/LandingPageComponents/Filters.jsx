@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 const locations = [
   "Bucharest",
@@ -20,9 +20,8 @@ const Filters = ({ onChange }) => {
   const [location, setLocation] = useState("");
   const [radius, setRadius] = useState("");
   const [salary, setSalary] = useState("");
-  const [match, setMatch] = useState(""); // default 50%
+  const [match, setMatch] = useState("");
 
-  // Poți trimite valorile către părinte la schimbare
   const handleChange = () => {
     if (onChange) {
       onChange({ location, radius, salary, match });
@@ -31,8 +30,7 @@ const Filters = ({ onChange }) => {
 
   return (
     <div className="flex flex-wrap gap-4 bg-white rounded-xl p-6 shadow justify-center items-center">
-      {/* Location */}
-      <div className="flex flex-col items-center basis-48">
+      <div className="flex flex-col justify-start basis-48">
         <label className="block mb-1 font-semibold text-gray-700">Location</label>
         <select
           className="border rounded px-3 py-2 min-w-[130px] w-full"
@@ -46,8 +44,7 @@ const Filters = ({ onChange }) => {
         </select>
       </div>
 
-      {/* Radius */}
-      <div className="flex flex-col items-center basis-48">
+      <div className="flex flex-col justify-start basis-48">
         <label className="block mb-1 font-semibold text-gray-700">Radius (km)</label>
         <select
           className="border rounded px-3 py-2 min-w-[100px] w-full"
@@ -61,8 +58,7 @@ const Filters = ({ onChange }) => {
         </select>
       </div>
 
-      {/* Salary */}
-      <div className="flex flex-col items-center basis-48">
+      <div className="flex flex-col justify-start basis-48">
         <label className="block mb-1 font-semibold text-gray-700">Minimum Salary</label>
         <input
           type="number"
@@ -74,8 +70,7 @@ const Filters = ({ onChange }) => {
         />
       </div>
 
-      {/* Minimum Match Percentage */}
-      <div className="flex flex-col items-center basis-48">
+      <div className="flex flex-col justify-start basis-48">
         <label className="block mb-1 font-semibold text-gray-700 text-left">Minimum Match (%)</label>
         <select
           className="border rounded px-3 py-2 w-full text-left"
@@ -93,6 +88,15 @@ const Filters = ({ onChange }) => {
             );
           })}
         </select>
+      </div>
+      <div className="flex flex-col justify-end basis-48">
+        <button
+          className="mt-6 px-4 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700 transition w-full"
+          onClick={handleChange}
+          type="button"
+        >
+          Search
+        </button>
       </div>
     </div>
   );

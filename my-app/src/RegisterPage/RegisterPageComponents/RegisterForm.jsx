@@ -1,13 +1,45 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 const RegisterForm = () => {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage("");
+    console.log("Registering user:", { username, email, password });
+    try {
+      const res = await fetch("http://localhost:3000/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage("Registered successfully!");
+        setUsername("");
+        setEmail("");
+        setPassword("");
+      } else {
+        setMessage(data.error || "Registration failed!");
+      }
+    } catch (err) {
+      setMessage("Server error!");
+    }
+  };
+
   return (
     <div className="w-lg h-150 p-12 content-center rounded-2xl bg-white">
-      <h2 className="text-center mb-1.5 text-3xl text-gray-900 font-poppins">Register</h2>
+      <h2 className="text-center mb-1.5 text-3xl text-gray-900 font-poppins">
+        Register
+      </h2>
       <p className="text-center text-gray-500 mb-5 text-lg font-poppins">
         Create your account to get started!
       </p>
-      <form>
+      <form onSubmit={handleSubmit}>
         <label className="block mb-1 font-semibold text-gray-700 text-lg font-poppins">
           Name
         </label>
@@ -15,6 +47,8 @@ const RegisterForm = () => {
           type="text"
           placeholder="Enter your name"
           className="w-full p-3 mb-4 rounded-md border border-gray-400 text-l outline-none transition focus:border-blue-500 font-poppins"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
         />
         <label className="block mb-2 font-semibold text-gray-700 text-lg font-poppins">
           Email
@@ -23,6 +57,8 @@ const RegisterForm = () => {
           type="email"
           placeholder="Enter your email"
           className="w-full p-3 mb-4 rounded-md border border-gray-400 text-l outline-none transition focus:border-blue-500 font-poppins"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <label className="block mb-2 font-semibold text-gray-700 text-lg font-poppins">
           Password
@@ -31,6 +67,8 @@ const RegisterForm = () => {
           type="password"
           placeholder="Create a password"
           className="w-full p-3 mb-8 rounded-md text-l border border-gray-400 outline-none transition focus:border-blue-500 font-poppins"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
         <button
           type="submit"
@@ -38,10 +76,18 @@ const RegisterForm = () => {
         >
           Register
         </button>
+        {message && (
+          <div className="text-center text-red-600 font-poppins mb-2">
+            {message}
+          </div>
+        )}
       </form>
       <div className="text-center text-base font-poppins">
         Already have an account?{" "}
-        <Link to="/login" className="text-blue-600 no-underline font-semibold font-poppins">
+        <Link
+          to="/login"
+          className="text-blue-600 no-underline font-semibold font-poppins"
+        >
           Sign up
         </Link>
       </div>
