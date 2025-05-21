@@ -1,44 +1,88 @@
 const express = require('express');
+require('dotenv').config();
 const bodyParser = require('body-parser');
-const { addUser, getPasswordByEmail } = require('./supabase');
+const multer = require("multer");
+const pdfParse = require("pdf-parse");
+const { addUser, getPasswordByEmail, saveJwtForEmail, saveCvForEmail} = require('./supabase');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const upload = multer();
+const jwtToken = process.env.JWT_SECRET;
 
 const app = express();
-const cors = require('cors');
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST'],
-    credentials: true,
+
+    credentials: false,
 }));
 app.use(bodyParser.json());
 
 app.post('/register', async (req, res) => {
     const { username, email, password } = req.body;
-    console.log('Received data:', req.body);
     if (!username || !email || !password) {
         return res.status(400).json({ error: 'Missing fields!' });
     }
     try {
+        const existing = await getPasswordByEmail(email);
+        if (existing) {
+            return res.status(409).json({ error: 'Email already registered!' });
+        }
         const data = await addUser(username, email, password);
-        res.json({ message: 'User added!', data });
+        return res.json({ message: 'User added!', data });
     } catch (error) {
+        console.log('Error adding user:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
-app.get('/get-password', async (req, res) => {
-    const { email } = req.query;
-    if (!email) {
-        return res.status(400).json({ error: 'No email!' });
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ error: 'Missing fields!' });
     }
     try {
-        const password = await getPasswordByEmail(email);
-        if (!password) {
-            return res.status(404).json({ error: 'User not found!' });
+        const hashedPassword = await getPasswordByEmail(email);
+        if (!hashedPassword) {
+            return res.status(401).json({ error: 'Invalid credentials!' });
         }
-        res.json({ password });
+        const valid = await bcrypt.compare(password, hashedPassword);
+        if (!valid) {
+            return res.status(401).json({ error: 'Invalid password!' });
+        }
+        const token = jwt.sign({ email }, jwtToken, { expiresIn: '7d' });
+        await saveJwtForEmail(email, token);
+
+        return res.json({ message: 'Login successful!', token });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.log('Error logging in:', error);
+        res.status(500).json({ error: 'Server error!' });
     }
+});
+
+app.post("/upload-pdf", upload.single("pdf"), async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    const decoded = jwt.verify(token, jwtToken);
+    const email = decoded.email;
+    // console.log("File received:", req.file);
+    // console.log("Decoded email:", email);
+
+    const data = await pdfParse(req.file.buffer);
+    const fileName = req.file.originalname;
+    const fileText = data.text;            
+
+    // console.log("pdfParse result:", data);
+    // console.log("Extracted text:", fileText);
+
+    await saveCvForEmail(email, fileName, fileText);
+
+    res.json({ text: fileText, fileName });
+  } catch (err) {
+    console.error("Eroare la upload-pdf:", err);
+    res.status(500).json({ error: "Eroare la extragerea textului din PDF!" });
+  }
 });
 
 const PORT = 3000;

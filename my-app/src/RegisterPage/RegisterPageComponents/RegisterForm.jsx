@@ -10,7 +10,6 @@ const RegisterForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
-    console.log("Registering user:", { username, email, password });
     try {
       const res = await fetch("http://localhost:3000/register", {
         method: "POST",

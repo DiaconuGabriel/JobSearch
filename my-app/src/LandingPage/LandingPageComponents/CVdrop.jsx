@@ -3,6 +3,7 @@ import React, { useRef, useState } from "react";
 const CVdrop = () => {
   const [cvAdded, setCvAdded] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [error, setError] = useState("");
   const dropRef = useRef(null);
 
   const handleDrop = (e) => {
@@ -24,7 +25,34 @@ const CVdrop = () => {
     const file = e.target.files[0];
     if (file) {
       setFileName(file.name);
-      setCvAdded(true);
+      setError("");
+
+      const formData = new FormData();
+      formData.append("pdf", file);
+      console.log("FormData:", formData);
+
+      fetch("http://localhost:3000/upload-pdf", {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.error) {
+            setError("Nu a putut fi citit fișierul!");
+            setCvAdded(false);
+          } else {
+            console.log("Text extras din PDF:", data.text);
+            setError("");
+            setCvAdded(true);
+          }
+        })
+        .catch(() => {
+          setError("Nu a putut fi citit fișierul!");
+          setCvAdded(false);
+        });
     }
   };
 
@@ -55,6 +83,9 @@ const CVdrop = () => {
           </span>
         )}
       </div>
+      {error && (
+        <div className="mt-4 text-red-600 font-semibold">{error}</div>
+      )}
     </div>
   );
 };
