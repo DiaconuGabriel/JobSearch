@@ -1,8 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import RegisterForm from "./RegisterPageComponents/RegisterForm";
 import About from "./RegisterPageComponents/About";
+import { useNavigate } from "react-router-dom";
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/landing-page", { replace: true });
+    }
+  }, [navigate]);
+
   return (
     <div
       className="

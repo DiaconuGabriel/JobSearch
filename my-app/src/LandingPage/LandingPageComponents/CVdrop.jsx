@@ -5,6 +5,13 @@ const CVdrop = () => {
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
   const dropRef = useRef(null);
+  
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(""), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   useEffect(() => {
     fetch("http://localhost:3000/user-profile", {
@@ -44,7 +51,6 @@ const CVdrop = () => {
 
       const formData = new FormData();
       formData.append("pdf", file);
-      console.log("FormData:", formData);
 
       fetch("http://localhost:3000/upload-pdf", {
         method: "POST",
@@ -59,7 +65,6 @@ const CVdrop = () => {
             setError("Nu a putut fi citit fișierul!");
             setCvAdded(false);
           } else {
-            console.log("Text extras din PDF:", data.text);
             setError("");
             setCvAdded(true);
           }
@@ -67,9 +72,13 @@ const CVdrop = () => {
         .catch(() => {
           setError("Nu a putut fi citit fișierul!");
           setCvAdded(false);
+        })
+        .finally(() => {
+          e.target.value = "";
         });
     }
   };
+
 
   return (
     <div className="flex flex-col items-center w-full">
@@ -99,7 +108,14 @@ const CVdrop = () => {
         )}
       </div>
       {error && (
-        <div className="mt-4 text-red-600 font-semibold">{error}</div>
+        <div
+          className={`fixed left-1/2 top-8 transform -translate-x-1/2 z-50 px-6 py-4 rounded-lg shadow font-poppins text-lg
+          bg-red-50 text-red-700 border border-red-300
+        `}
+          style={{ minWidth: 300, maxWidth: 400, textAlign: "center" }}
+        >
+          {error}
+        </div>
       )}
     </div>
   );

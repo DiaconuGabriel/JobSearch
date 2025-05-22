@@ -47,9 +47,9 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="size-140 p-10 rounded-2xl content-center bg-white">
+    <div className="size-135 p-10 rounded-2xl content-center bg-white">
       <h2 className="text-center mt-2 mb-2 text-3xl text-gray-900 font-poppins">Log in</h2>
-      <p className="text-center text-gray-500 mb-7 text-lg font-poppins">
+      <p className="text-center text-gray-500 mb-5 text-lg font-poppins">
         Welcome back! Please log in to continue!
       </p>
       <form onSubmit={handleSubmit}>

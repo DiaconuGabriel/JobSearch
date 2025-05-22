@@ -1,7 +1,18 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import LoginForm from "./LoginPageComponents/LoginForm";
+import { useEffect } from "react";
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/landing-page", { replace: true });
+    }
+  }, [navigate]);
+
   return (
     <div
       className="

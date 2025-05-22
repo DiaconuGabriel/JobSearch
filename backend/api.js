@@ -9,6 +9,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const upload = multer();
 const jwtToken = process.env.JWT_SECRET;
+const emailUser = process.env.EMAIL_USER;
+const emailPass = process.env.EMAIL_PASS;
+const nodemailer = require('nodemailer');
 
 const app = express();
 app.use(cors({
@@ -18,6 +21,14 @@ app.use(cors({
     credentials: false,
 }));
 app.use(bodyParser.json());
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: emailUser,
+        pass: emailPass
+    }
+});
 
 app.post('/register', async (req, res) => {
     const { username, email, password } = req.body;
@@ -139,15 +150,26 @@ app.post("/delete-account", async (req, res) => {
 
 app.post("/forgot-password", async (req, res) => {
     const { email } = req.body;
+    console.log('Received email:', email);
     if (!email) {
         return res.status(400).json({ error: 'Missing email!' });
     }
     try {
         const hashedPassword = await getPasswordByEmail(email);
-        if (!hashedPassword) {
-            return res.status(401).json({ error: 'Invalid email!' });
+        console.log('Hashed password:', hashedPassword);
+        if (hashedPassword) {
+            console.log('Email exists, sending reset link...');
+            const resetToken = jwt.sign({ email }, jwtToken, { expiresIn: '15m' });
+            const resetLink = `http://localhost:5173/reset-password?reset-token=${resetToken}`;
+            await transporter.sendMail({
+                from: emailUser,
+                to: email,
+                subject: "Password Reset",
+                text: `Click the following link to reset your password: ${resetLink}`
+            });
+            console.log('Finished sending email');
         }
-        return res.json({ message: 'Password reset link sent!', token });
+        return res.json({ message: 'If the email exists, you will receive a recovery email.' });
     } catch (error) {
         console.log('Error sending password reset link:', error);
         res.status(500).json({ error: 'Server error!' });
