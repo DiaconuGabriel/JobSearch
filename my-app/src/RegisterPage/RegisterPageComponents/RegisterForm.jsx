@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect} from "react";
 import { Link } from "react-router-dom";
 
 const RegisterForm = () => {
@@ -6,6 +6,13 @@ const RegisterForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(""), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -76,7 +83,15 @@ const RegisterForm = () => {
           Register
         </button>
         {message && (
-          <div className="text-center text-red-600 font-poppins mb-2">
+          <div
+            className={`fixed left-1/2 top-8 transform -translate-x-1/2 z-50 px-6 py-4 rounded-lg shadow font-poppins text-lg
+              ${message === "Registered successfully!"
+                ? "bg-green-50 text-green-700 border border-green-300"
+                : "bg-red-50 text-red-700 border border-red-300"
+              }
+            `}
+            style={{ minWidth: 300, maxWidth: 400, textAlign: "center" }}
+          >
             {message}
           </div>
         )}

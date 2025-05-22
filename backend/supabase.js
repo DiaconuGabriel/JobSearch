@@ -21,7 +21,7 @@ async function getPasswordByEmail(email) {
         .select('password')
         .eq('email', email)
         .single();
-    if (error) throw error;
+    if (error) return null;
     return data ? data.password : null;
 }
 
@@ -43,4 +43,54 @@ async function saveCvForEmail(email, fileName, fileText) {
     return data;
 }
 
-module.exports = { addUser, getPasswordByEmail, saveJwtForEmail, saveCvForEmail };
+async function getUserProfileByEmail(email) {
+    const { data, error } = await supabase
+        .from(tableName)
+        .select('username, cv_name')
+        .eq('email', email)
+        .single();
+    if (error) throw error;
+    return {
+        username: data?.username || "",
+        cv_name: data?.cv_name || ""
+    };
+}
+
+async function updateUsernameForEmail(email, newUsername) {
+  const { data, error } = await supabase
+    .from(tableName)
+    .update({ username: newUsername })
+    .eq('email', email);
+  if (error) throw error;
+  return data;
+}
+
+async function updatePasswordForEmail(email, newPassword) {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const { data, error } = await supabase
+        .from(tableName)
+        .update({ password: hashedPassword })
+        .eq('email', email);
+    if (error) throw error;
+    return data;
+}
+
+async function deleteUserByEmail(email) {
+    const { data, error } = await supabase
+        .from(tableName)
+        .delete()
+        .eq('email', email);
+    if (error) throw error;
+    return data;
+}
+
+module.exports = {
+    addUser,
+    getPasswordByEmail,
+    saveJwtForEmail,
+    saveCvForEmail,
+    getUserProfileByEmail,
+    updateUsernameForEmail,
+    updatePasswordForEmail,
+    deleteUserByEmail
+};

@@ -40,7 +40,7 @@ const NavbarComponent = () => {
             className="flex items-center justify-center flex-shrink-0"
             onClick={handleLogout}
           >
-            <img src={logoutIcon} width={28} height={28} alt="Logout" className="flex-shrink-0" />
+          <img src={logoutIcon} width={28} height={28} alt="Logout" className="flex-shrink-0" />
           </button>
           <span className="absolute left-1/2 -translate-x-1/2 mt-10.5 px-2 py-1.5 rounded bg-gray-800 text-white text-xs opacity-0 group-hover:opacity-100 pointer-events-none transition whitespace-nowrap z-20">
             Logout

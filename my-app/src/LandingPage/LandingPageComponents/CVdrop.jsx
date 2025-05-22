@@ -1,10 +1,25 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 
 const CVdrop = () => {
   const [cvAdded, setCvAdded] = useState(false);
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
   const dropRef = useRef(null);
+
+  useEffect(() => {
+    fetch("http://localhost:3000/user-profile", {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token"),
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.cv_name) {
+          setFileName(data.cv_name);
+          setCvAdded(true);
+        }
+      });
+  }, []);
 
   const handleDrop = (e) => {
     e.preventDefault();

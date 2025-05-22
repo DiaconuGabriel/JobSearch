@@ -1,15 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage("");
+        setMessageType("");
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
+    setMessageType("");
     try {
       const res = await fetch("http://localhost:3000/login", {
         method: "POST",
@@ -19,17 +31,18 @@ const LoginForm = () => {
       const data = await res.json();
       if (res.ok) {
         setMessage("Login successful!");
-        console.log(data.token);
+        setMessageType("success");
         localStorage.setItem("token", data.token);
         setEmail("");
         setPassword("");
         navigate("/landing-page");
       } else {
         setMessage(data.error || "Login failed!");
+        setMessageType("error");
       }
     } catch (err) {
-      console.log(err);
       setMessage("Server error!");
+      setMessageType("error");
     }
   };
 
@@ -46,7 +59,7 @@ const LoginForm = () => {
         <input
           type="email"
           placeholder="Enter your email"
-          className="w-full p-3 mb-8 rounded-md border border-gray-400 text-l outline-none transition focus:border-blue-500 font-poppins"
+          className="w-full p-3 mb-6 rounded-md border border-gray-400 text-l outline-none transition focus:border-blue-500 font-poppins"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -72,7 +85,15 @@ const LoginForm = () => {
           Log In
         </button>
         {message && (
-          <div className="text-center text-red-600 font-poppins mb-2">
+          <div
+            className={`fixed left-1/2 top-8 transform -translate-x-1/2 z-50 px-6 py-4 rounded-lg shadow font-poppins text-lg
+              ${messageType === "success"
+                ? "bg-green-50 text-green-700 border border-green-300"
+                : "bg-red-50 text-red-700 border border-red-300"
+              }
+            `}
+            style={{ minWidth: 300, maxWidth: 400, textAlign: "center" }}
+          >
             {message}
           </div>
         )}

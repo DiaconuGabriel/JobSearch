@@ -1,53 +1,169 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const SettingsPage = () => {
-    const [username, setUsername] = useState("username");
+    const navigate = useNavigate();
+    const [username, setUsername] = useState("");
+    const [cvFileName, setCvFileName] = useState("");
+
     const [editUsername, setEditUsername] = useState(false);
-    const [newUsername, setNewUsername] = useState(username);
+    const [newUsername, setNewUsername] = useState("");
 
     const [editPassword, setEditPassword] = useState(false);
-    const [password, setPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-    const [cvFile, setCvFile] = useState(null);
+    const [message, setMessage] = useState("");
+    const [messageType, setMessageType] = useState("");
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+        navigate("/login");
+        }
+    }, [navigate]);
+
+    useEffect(() => {
+        if (message) {
+            const timer = setTimeout(() => {
+                setMessage("");
+                setMessageType("");
+            }, 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [message]);
+    
+    useEffect(() => {
+        fetch("http://localhost:3000/user-profile", {
+            headers: {
+                Authorization: "Bearer " + localStorage.getItem("token"),
+            },
+        })
+            .then(res => res.json())
+            .then(data => {
+                setUsername(data.username || "");
+                setCvFileName(data.cv_name || "");
+            });
+    }, []);
 
     const handleUsernameChange = (e) => setNewUsername(e.target.value);
-    const handlePasswordChange = (e) => setPassword(e.target.value);
     const handleNewPasswordChange = (e) => setNewPassword(e.target.value);
 
-    const handleSaveUsername = () => {
-        setUsername(newUsername);
-        setEditUsername(false);
-        alert("Username changed!");
+    const handleSaveUsername = async () => {
+        try {
+            const res = await fetch("http://localhost:3000/update-username", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + localStorage.getItem("token"),
+                },
+                body: JSON.stringify({ newUsername }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setUsername(newUsername);
+                setEditUsername(false);
+                setMessage("Username changed!");
+                setMessageType("success");
+            } else {
+                setMessage(data.error || "Could not update username!");
+                setMessageType("error");
+            }
+        } catch {
+            setMessage("Server error!");
+            setMessageType("error");
+        }
     };
 
-    const handleSavePassword = () => {
-        setEditPassword(false);
-        setPassword("");
-        setNewPassword("");
-        alert("Password changed!");
+    const handleSavePassword = async () => {
+        try {
+            const res = await fetch("http://localhost:3000/update-password", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + localStorage.getItem("token"),
+                },
+                body: JSON.stringify({ newPassword }),
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                setEditPassword(false);
+                setNewPassword("");
+                setMessage("Password changed!");
+                setMessageType("success");
+            } else {
+                setMessage(data.error || "Could not update password!");
+                setMessageType("error");
+            }
+        } catch {
+            setMessage("Server error!");
+            setMessageType("error");
+        }
     };
 
-    const handleDeleteAccount = () => {
-        setShowDeleteModal(true);
+    const handleDeleteAccount = () => setShowDeleteModal(true);
+
+    const handleConfirmDelete = async () => {
+        try {
+            const res = await fetch("http://localhost:3000/delete-account", {
+                method: "POST",
+                headers: {
+                    Authorization: "Bearer " + localStorage.getItem("token"),
+                },
+            });
+            const data = await res.json();
+            setShowDeleteModal(false);
+            if (res.ok && data.success) {
+                setMessage("Account deleted!");
+                setMessageType("success");
+                localStorage.removeItem("token");
+                setTimeout(() => {
+                    window.location.href = "/register";
+                }, 250);
+            } else {
+                setMessage(data.error || "Could not delete account!");
+                setMessageType("error");
+            }
+        } catch {
+            setShowDeleteModal(false);
+            setMessage("Server error!");
+            setMessageType("error");
+        }
     };
 
-    const handleConfirmDelete = () => {
-        setShowDeleteModal(false);
-        alert("Account deleted!");
-    };
-
-    const handleCancelDelete = () => {
-        setShowDeleteModal(false);
-    };
+    const handleCancelDelete = () => setShowDeleteModal(false);
 
     const handleCvChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            setCvFile(e.target.files[0]);
-        }
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("pdf", file);
+
+        fetch("http://localhost:3000/upload-pdf", {
+            method: "POST",
+            body: formData,
+            headers: {
+                Authorization: "Bearer " + localStorage.getItem("token"),
+            },
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.error) {
+                    setMessage(data.error || "Could not upload CV!");
+                    setMessageType("error");
+                } else {
+                    setCvFileName(data.fileName);
+                    setMessage("CV uploaded successfully!");
+                    setMessageType("success");
+                }
+            })
+            .catch(() => {
+                setMessage("Could not upload CV!");
+                setMessageType("error");
+            });
     };
 
     return (
@@ -62,18 +178,18 @@ const SettingsPage = () => {
                     </Link>
                 </div>
             </div>
-            <div className="flex items-center justify-center flex-1 px-5">
-                <div className="w-full max-w-xl relative mb-8">
-                    <h2 className="text-3xl font-bold text-left mb-0 absolute -top-12">Settings</h2>
+            <div className="flex items-center justify-center flex-1 m-5">
+                <div className="w-full max-w-xl relative mb-10">
+                    <h2 className="text-3xl font-bold text-left mb-2">Settings</h2>
                     <div className="bg-white flex flex-col gap-10 items-stretch justify-center shadow-md p-8">
-                        <div className="">
+                        <div>
                             <label className="text-lg block font-semibold mb-1">CV</label>
                             <hr className="my-2" />
                             <div className="flex items-center justify-between gap-2">
                                 <span className="text-gray-800 font-medium">
-                                    {cvFile ? cvFile.name : "No CV uploaded"}
+                                    {cvFileName || "No CV uploaded"}
                                 </span>
-                                <label className="px-3 py-1 bg-blue-500 text-white rounded cursor-pointer ml-4">
+                                <label className="min-w-[90px] py-2 px-3 bg-blue-500 text-white rounded cursor-pointer ml-4 text-center flex items-center justify-center">
                                     Browse
                                     <input
                                         type="file"
@@ -90,7 +206,7 @@ const SettingsPage = () => {
                             <div className="flex items-center justify-between gap-2">
                                 <span className="text-gray-800 font-medium">{username}</span>
                                 <button
-                                    className="px-3 py-1 bg-blue-500 text-white rounded ml-4"
+                                    className="min-w-[90px] py-2 px-3 bg-blue-500 text-white rounded ml-4"
                                     onClick={() => {
                                         setEditUsername(true);
                                         setNewUsername("");
@@ -100,25 +216,29 @@ const SettingsPage = () => {
                                 </button>
                             </div>
                             {editUsername && (
-                                <div className="flex gap-2 mt-2">
-                                    <input
-                                        type="text"
-                                        className="border rounded px-3 py-2 flex-1"
-                                        value={newUsername}
-                                        onChange={handleUsernameChange}
-                                    />
-                                    <button
-                                        className="px-3 py-1 bg-green-500 text-white rounded"
-                                        onClick={handleSaveUsername}
-                                    >
-                                        Save
-                                    </button>
-                                    <button
-                                        className="px-3 py-1 bg-gray-300 text-gray-800 rounded"
-                                        onClick={() => { setEditUsername(false); setNewUsername(username); }}
-                                    >
-                                        Cancel
-                                    </button>
+                                <div className="flex flex-col mt-2 gap-2">
+                                    <div className="flex flex-col sm:flex-row gap-2 w-full">
+                                        <input
+                                            type="text"
+                                            className="border rounded px-3 py-2 flex-1 min-w-[120px]"
+                                            value={newUsername}
+                                            onChange={handleUsernameChange}
+                                        />
+                                        <div className="flex flex-row gap-2 w-full sm:w-auto">
+                                            <button
+                                                className="w-full sm:w-auto px-3 py-2 bg-green-500 text-white rounded"
+                                                onClick={handleSaveUsername}
+                                            >
+                                                Save
+                                            </button>
+                                            <button
+                                                className="w-full sm:w-auto px-3 py-2 bg-gray-300 text-gray-800 rounded"
+                                                onClick={() => { setEditUsername(false); setNewUsername(username); }}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -128,33 +248,37 @@ const SettingsPage = () => {
                             <div className="flex items-center justify-between gap-2">
                                 <span className="text-gray-800 font-medium">********</span>
                                 <button
-                                    className="px-3 py-1 bg-blue-500 text-white rounded ml-4"
+                                    className="min-w-[90px] py-2 px-3 bg-blue-500 text-white rounded ml-4"
                                     onClick={() => setEditPassword(true)}
                                 >
                                     Change
                                 </button>
                             </div>
                             {editPassword && (
-                                <div className="flex gap-2 mt-2">
-                                    <input
-                                        type="password"
-                                        className="border rounded px-3 py-2 flex-1"
-                                        placeholder="New password"
-                                        value={newPassword}
-                                        onChange={handleNewPasswordChange}
-                                    />
-                                    <button
-                                        className="px-3 py-1 bg-green-500 text-white rounded"
-                                        onClick={handleSavePassword}
-                                    >
-                                        Save
-                                    </button>
-                                    <button
-                                        className="px-3 py-1 bg-gray-300 text-gray-800 rounded"
-                                        onClick={() => { setEditPassword(false); setNewPassword(""); }}
-                                    >
-                                        Cancel
-                                    </button>
+                                <div className="flex flex-col mt-2 gap-2">
+                                    <div className="flex flex-col sm:flex-row gap-2 w-full">
+                                        <input
+                                            type="password"
+                                            className="border rounded px-3 py-2 flex-1"
+                                            placeholder="New password"
+                                            value={newPassword}
+                                            onChange={handleNewPasswordChange}
+                                        />
+                                        <div className="flex flex-row gap-2 w-full sm:w-auto">
+                                            <button
+                                                className="w-full sm:w-auto px-3 py-2 bg-green-500 text-white rounded"
+                                                onClick={handleSavePassword}
+                                            >
+                                                Save
+                                            </button>
+                                            <button
+                                                className="w-full sm:w-auto px-3 py-2 bg-gray-300 text-gray-800 rounded"
+                                                onClick={() => { setEditPassword(false); setNewPassword(""); }}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -188,6 +312,16 @@ const SettingsPage = () => {
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+            {message && (
+                <div
+                    className={`fixed left-1/2 top-8 transform -translate-x-1/2 z-50 px-6 py-4 rounded-lg shadow font-poppins text-lg
+                    ${messageType === "success" ? "bg-green-50 text-green-700 border border-green-300" : "bg-red-50 text-red-700 border border-red-300"}
+                    `}
+                    style={{ minWidth: 300, maxWidth: 400, textAlign: "center" }}
+                >
+                    {message}
                 </div>
             )}
         </div>
