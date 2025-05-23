@@ -1,17 +1,19 @@
-const express = require('express');
 require('dotenv').config();
+const express = require('express');
 const bodyParser = require('body-parser');
+const GeminiApi = require('./GeminiApi');
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
-const { addUser, getPasswordByEmail, saveJwtForEmail, saveCvForEmail, getUserProfileByEmail, updateUsernameForEmail, updatePasswordForEmail, deleteUserByEmail} = require('./supabase');
-const cors = require('cors');
+const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { addUser, getPasswordByEmail, saveJwtForEmail, saveCvForEmail, getUserProfileByEmail, updateUsernameForEmail, updatePasswordForEmail, deleteUserByEmail, saveJwtForResetPassword, deleteJwtForResetPassword, checkResetTokenInDB, getCvForEmail} = require('./supabase');
+const cors = require('cors');
 const upload = multer();
 const jwtToken = process.env.JWT_SECRET;
 const emailUser = process.env.EMAIL_USER;
 const emailPass = process.env.EMAIL_PASS;
-const nodemailer = require('nodemailer');
+const gemini = new GeminiApi(process.env.AI_API_KEY);
 
 const app = express();
 app.use(cors({
@@ -129,6 +131,9 @@ app.post("/update-password", async (req, res) => {
     const decoded = jwt.verify(token, jwtToken);
     const email = decoded.email;
     const { newPassword } = req.body;
+    if (!newPassword) {
+      return res.status(400).json({ error: "Missing new password!" });
+    }
     await updatePasswordForEmail(email, newPassword);
     res.json({ success: true });
   } catch (err) {
@@ -160,6 +165,7 @@ app.post("/forgot-password", async (req, res) => {
         if (hashedPassword) {
             console.log('Email exists, sending reset link...');
             const resetToken = jwt.sign({ email }, jwtToken, { expiresIn: '15m' });
+            await saveJwtForResetPassword(email, resetToken);
             const resetLink = `http://localhost:5173/reset-password?reset-token=${resetToken}`;
             await transporter.sendMail({
                 from: emailUser,
@@ -174,7 +180,77 @@ app.post("/forgot-password", async (req, res) => {
         console.log('Error sending password reset link:', error);
         res.status(500).json({ error: 'Server error!' });
     }
-})
+});
+
+app.post("/delete-reset-token", async (req, res) => {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+        return res.status(400).json({ error: 'Missing token!' });
+    }
+    try {
+        const decoded = jwt.verify(token, jwtToken);
+        const email = decoded.email;
+        await deleteJwtForResetPassword(email);
+        return res.json({ message: 'Reset token deleted!' });
+    } catch (error) {
+        console.log('Error deleting reset token:', error);
+        res.status(500).json({ error: 'Server error!' });
+    }
+});
+
+app.get("/validate-token", (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  try {
+    jwt.verify(token, jwtToken);
+    res.json({ valid: true });
+  } catch {
+    res.json({ valid: false });
+  }
+});
+
+app.post("/validate-reset-token", async (req, res) => {
+  const reset_token = req.headers.authorization?.split(" ")[1];
+  console.log('Received reset token:', reset_token);
+  // if (!reset_token) return res.json({ valid: false });
+  try {
+    const decoded = jwt.verify(reset_token, jwtToken);
+    const email = decoded.email;
+    console.log('Decoded email:', email);
+    const exists = await checkResetTokenInDB(email);
+    console.log('Token exists in DB:', exists);
+    res.json({ valid: !!exists });
+  } catch {
+    res.json({ valid: false });
+  }
+});
+
+app.post("/get_gemini_keywords", async (req, res) => {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+        return res.status(401).json({ error: "Missing token!" });
+    }
+    let email;
+    try {
+        const decoded = jwt.verify(token, jwtToken);
+        email = decoded.email;
+    } catch {
+        return res.status(401).json({ error: "Invalid token!" });
+    }
+
+    try {
+        const cvData = await getCvForEmail(email);
+        console.log('CV data:', cvData);
+        if (!cvData) {
+            return res.status(404).json({ error: "CV not found!" });
+        }
+        const keywords = await gemini.extractKeywords(cvData);
+        console.log('Extracted keywords:', keywords);
+        res.json({ keywords, email });
+    } catch (error) {
+        console.log('Error getting keywords:', error);
+        res.status(500).json({ error: 'Server error!' });
+    }
+});
 
 const PORT = 3000;
 app.listen(PORT, () => {

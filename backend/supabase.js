@@ -34,6 +34,34 @@ async function saveJwtForEmail(email, jwtToken) {
     return data;
 }
 
+async function saveJwtForResetPassword(email, reset_token) {
+    const { data, error } = await supabase
+        .from(tableName)
+        .update({ reset_token: reset_token })
+        .eq('email', email);
+    if (error) throw error;
+    return data;
+}
+
+async function deleteJwtForResetPassword(email) {
+    const { data, error } = await supabase
+        .from(tableName)
+        .update({ reset_token: null })
+        .eq('email', email);
+    if (error) throw error;
+    return data;
+}
+
+async function checkResetTokenInDB(email) {
+    const { data, error } = await supabase
+        .from(tableName)
+        .select('reset_token')
+        .eq('email', email)
+        .single();
+    if (error) return null;
+    return data ? data.reset_token : null;
+}
+
 async function saveCvForEmail(email, fileName, fileText) {
     const { data, error } = await supabase
         .from(tableName)
@@ -41,6 +69,16 @@ async function saveCvForEmail(email, fileName, fileText) {
         .eq('email', email);
     if (error) throw error;
     return data;
+}
+
+async function getCvForEmail(email) {
+    const { data, error } = await supabase
+        .from(tableName)
+        .select('cv')
+        .eq('email', email)
+        .single();
+    if (error) throw error;
+    return data ? data.cv : null;
 }
 
 async function getUserProfileByEmail(email) {
@@ -92,5 +130,9 @@ module.exports = {
     getUserProfileByEmail,
     updateUsernameForEmail,
     updatePasswordForEmail,
-    deleteUserByEmail
+    deleteUserByEmail,
+    saveJwtForResetPassword,
+    deleteJwtForResetPassword,
+    checkResetTokenInDB,
+    getCvForEmail
 };

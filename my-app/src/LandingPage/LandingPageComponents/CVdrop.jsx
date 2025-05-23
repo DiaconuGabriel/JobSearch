@@ -76,6 +76,28 @@ const CVdrop = () => {
         .finally(() => {
           e.target.value = "";
         });
+      
+      fetch("http://localhost:3000/get_gemini_keywords", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.error) {
+            setError("Nu a putut fi citit fișierul!");
+            setCvAdded(false);
+          } else {
+            setError("");
+            setCvAdded(true);
+          }
+        })
+        .catch(() => {
+          setError("Nu a putut fi citit fișierul!");
+          setCvAdded(false);
+        });
     }
   };
 

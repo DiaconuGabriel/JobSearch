@@ -9,7 +9,20 @@ const LoginPage = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      navigate("/landing-page", { replace: true });
+      fetch("http://localhost:3000/validate-token", {
+        headers: { Authorization: "Bearer " + token },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.valid) {
+            navigate("/landing-page", { replace: true });
+          } else {
+            localStorage.removeItem("token");
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem("token");
+        });
     }
   }, [navigate]);
 

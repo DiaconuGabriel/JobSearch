@@ -7,31 +7,60 @@ const ResetPasswordPage = () => {
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const [criticalError, setCriticalError] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!reset_token) {
-        setMessage("Invalid or expired token!");
+      setMessage("This page cannot be accessed.");
+      setMessageType("error");
+      setCriticalError(true);
+      return;
+    }
+    fetch("http://localhost:3000/validate-reset-token", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + reset_token,
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.valid) {
+          setMessage("This page cannot be accessed.");
+          setTimeout(() => navigate("/login"), 1500);
+          setMessageType("error");
+          setCriticalError(true);
+        }
+      })
+      .catch(() => {
+        setMessage("Server error!");
         setMessageType("error");
         setTimeout(() => navigate("/login"), 1500);
-    }
-    }, [reset_token, navigate]);
+        setCriticalError(false);
+      });
+  }, [reset_token, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
     setMessageType("");
     try {
-       const res = await fetch("http://localhost:3000/update-password", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + reset_token,
-            },
-            body: JSON.stringify({ newPassword }),
-        });
+      const res = await fetch("http://localhost:3000/update-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + reset_token,
+        },
+        body: JSON.stringify({ newPassword }),
+      });
       const data = await res.json();
       if (res.ok && data.success) {
+        await fetch("http://localhost:3000/delete-reset-token", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + reset_token,
+          },
+        });
         setMessage("Password changed successfully!");
         setMessageType("success");
         setTimeout(() => navigate("/login"), 1500);
@@ -44,6 +73,14 @@ const ResetPasswordPage = () => {
       setMessageType("error");
     }
   };
+
+  if (criticalError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <span className="text-4xl font-bold text-white text-center">{message}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
