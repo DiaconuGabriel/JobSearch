@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
 const SettingsPage = () => {
     const navigate = useNavigate();
+    const fileInputRef = useRef(null);
     const [username, setUsername] = useState("");
     const [cvFileName, setCvFileName] = useState("");
 
@@ -17,6 +18,8 @@ const SettingsPage = () => {
 
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("");
+
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -52,6 +55,11 @@ const SettingsPage = () => {
     const handleNewPasswordChange = (e) => setNewPassword(e.target.value);
 
     const handleSaveUsername = async () => {
+        if (!newUsername.trim()) {
+            setMessage("Username cannot be empty!");
+            setMessageType("error");
+            return;
+        }
         try {
             const res = await fetch("http://localhost:3000/update-username", {
                 method: "POST",
@@ -78,6 +86,11 @@ const SettingsPage = () => {
     };
 
     const handleSavePassword = async () => {
+        if (!newPassword.trim()) {
+            setMessage("Password cannot be empty!");
+            setMessageType("error");
+            return;
+        }
         try {
             const res = await fetch("http://localhost:3000/update-password", {
                 method: "POST",
@@ -120,7 +133,7 @@ const SettingsPage = () => {
                 setMessageType("success");
                 localStorage.removeItem("token");
                 setTimeout(() => {
-                    window.location.href = "/register";
+                    navigate("/register");
                 }, 250);
             } else {
                 setMessage(data.error || "Could not delete account!");
@@ -142,6 +155,9 @@ const SettingsPage = () => {
         const formData = new FormData();
         formData.append("pdf", file);
 
+        setMessage("");
+        setIsAnalyzing(true);
+
         fetch("http://localhost:3000/upload-pdf", {
             method: "POST",
             body: formData,
@@ -151,18 +167,25 @@ const SettingsPage = () => {
         })
             .then((res) => res.json())
             .then((data) => {
+                setIsAnalyzing(false);
                 if (data.error) {
                     setMessage(data.error || "Could not upload CV!");
                     setMessageType("error");
-                } else {
-                    setCvFileName(data.fileName);
-                    setMessage("CV uploaded successfully!");
-                    setMessageType("success");
+                    return;
                 }
+                setCvFileName(data.fileName);
+                setMessage("CV saved!");
+                setMessageType("success");
             })
             .catch(() => {
+                setIsAnalyzing(false);
                 setMessage("Could not upload CV!");
                 setMessageType("error");
+            })
+            .finally(() => {
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                }
             });
     };
 
@@ -183,19 +206,23 @@ const SettingsPage = () => {
                     <h2 className="text-3xl font-bold text-left mb-2">Settings</h2>
                     <div className="bg-white flex flex-col gap-10 items-stretch justify-center shadow-md p-8">
                         <div>
-                            <label className="text-lg block font-semibold mb-1">CV</label>
+                            <label className="text-lg block font-semibold mb-1">CV (only .pdf)</label>
                             <hr className="my-2" />
                             <div className="flex items-center justify-between gap-2">
                                 <span className="text-gray-800 font-medium">
-                                    {cvFileName || "No CV uploaded"}
+                                    {isAnalyzing
+                                        ? "Waiting for CV to upload..."
+                                        : (cvFileName || "No CV uploaded")}
                                 </span>
                                 <label className="min-w-[90px] py-2 px-3 bg-blue-500 text-white rounded cursor-pointer ml-4 text-center flex items-center justify-center">
                                     Browse
                                     <input
                                         type="file"
-                                        accept=".pdf,.doc,.docx"
+                                        accept=".pdf"
                                         className="hidden"
                                         onChange={handleCvChange}
+                                        ref={fileInputRef}
+                                        disabled={isAnalyzing}
                                     />
                                 </label>
                             </div>

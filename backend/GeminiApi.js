@@ -6,7 +6,7 @@ class GeminiApi {
 
     async extractKeywords(cvText) {
         const fetch = (await import('node-fetch')).default;
-        const prompt = `Extrage cele mai relevante cuvinte cheie din următorul CV și returnează-le ca o listă JSON: "${cvText}"`;
+        const prompt = `Extrage cele mai relevante 20-30 cuvinte cheie din următorul CV și returnează-le ca un string delimitat de spatiu fara virgula. Nimic altceva ca cuvinte de legatura. Aici este CV-ul: "${cvText}"`;
 
         const body = {
             contents: [
@@ -26,11 +26,7 @@ class GeminiApi {
 
         const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        try {
-            return JSON.parse(text);
-        } catch {
-            return text;
-        }
+        return text;    
     }
 }
 

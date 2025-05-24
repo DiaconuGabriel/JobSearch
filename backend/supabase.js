@@ -122,11 +122,32 @@ async function deleteUserByEmail(email) {
     return data;
 }
 
+async function saveCvKeysForEmail(email, cvKeys) {
+    const { data, error } = await supabase
+        .from(tableName)
+        .update({ keywords: cvKeys })
+        .eq('email', email);
+    if (error) throw error;
+    return data;
+}
+
+async function getKeyWordsForEmail(email) {
+    const { data, error } = await supabase
+        .from(tableName)
+        .select('keywords')
+        .eq('email', email)
+        .single();
+    if (error) throw error;
+    return data ? data.keywords : null;
+}
+
 module.exports = {
     addUser,
     getPasswordByEmail,
     saveJwtForEmail,
     saveCvForEmail,
+    getCvForEmail,
+    saveCvKeysForEmail,
     getUserProfileByEmail,
     updateUsernameForEmail,
     updatePasswordForEmail,
@@ -134,5 +155,5 @@ module.exports = {
     saveJwtForResetPassword,
     deleteJwtForResetPassword,
     checkResetTokenInDB,
-    getCvForEmail
+    getKeyWordsForEmail
 };

@@ -1,11 +1,9 @@
 import { useState } from "react";
 
 const locations = [
-  "Bucharest",
-  "Cluj-Napoca",
-  "Timisoara",
-  "Iasi",
   "Remote",
+  "Romania",
+  "Europe",
 ];
 
 const radiusOptions = [
@@ -16,15 +14,47 @@ const radiusOptions = [
   { label: "100 km", value: 100 },
 ];
 
-const Filters = ({ onChange }) => {
+const Filters = ({ onChange, onJobsFetched}) => {
   const [location, setLocation] = useState("");
   const [radius, setRadius] = useState("");
   const [salary, setSalary] = useState("");
   const [match, setMatch] = useState("");
+  const [error, setError] = useState("");
 
   const handleChange = () => {
     if (onChange) {
       onChange({ location, radius, salary, match });
+    }
+  };
+
+  const handleSearch = async () => {
+    const params = {};
+    if (location) params.location = location;
+    if (radius) params.radius = String(radius);
+    if (salary) params.salary = parseInt(salary, 10);
+    try {
+      console.log("Searching with params:", params);
+      const res = await fetch("http://localhost:3000/get-jobs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Error fetching jobs!");
+        setTimeout(() => setError(""), 2000);
+        return;
+      }
+      const data = await res.json();
+      console.log("Its ok", res.ok);
+      console.log("Jobs fetched:", data);
+      onJobsFetched(data);
+    } catch (err) {
+      setError("Error fetching jobs!");
+      setTimeout(() => setError(""), 2000);
     }
   };
 
@@ -92,12 +122,22 @@ const Filters = ({ onChange }) => {
       <div className="flex flex-col justify-end basis-48">
         <button
           className="mt-6 px-4 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700 transition w-full"
-          onClick={handleChange}
+          onClick={handleSearch}
           type="button"
         >
           Search
         </button>
       </div>
+      {error && (
+        <div
+          className={`fixed left-1/2 top-8 transform -translate-x-1/2 z-50 px-6 py-4 rounded-lg shadow font-poppins text-lg
+          bg-red-50 text-red-700 border border-red-300
+        `}
+          style={{ minWidth: 300, maxWidth: 400, textAlign: "center" }}
+        >
+          {error}
+        </div>
+      )}
     </div>
   );
 };

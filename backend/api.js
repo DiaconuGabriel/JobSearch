@@ -2,14 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const GeminiApi = require('./GeminiApi');
+const JoobleApi = require('./joobleApi');
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { addUser, getPasswordByEmail, saveJwtForEmail, saveCvForEmail, getUserProfileByEmail, updateUsernameForEmail, updatePasswordForEmail, deleteUserByEmail, saveJwtForResetPassword, deleteJwtForResetPassword, checkResetTokenInDB, getCvForEmail} = require('./supabase');
+const supabase = require('./supabase');
 const cors = require('cors');
 const upload = multer();
+const joobleApi = new JoobleApi(process.env.JOOBLE_API_KEY);
 const jwtToken = process.env.JWT_SECRET;
 const emailUser = process.env.EMAIL_USER;
 const emailPass = process.env.EMAIL_PASS;
@@ -38,11 +40,11 @@ app.post('/register', async (req, res) => {
         return res.status(400).json({ error: 'Missing fields!' });
     }
     try {
-        const existing = await getPasswordByEmail(email);
+        const existing = await supabase.getPasswordByEmail(email);
         if (existing) {
             return res.status(409).json({ error: 'Email already registered!' });
         }
-        const data = await addUser(username, email, password);
+        const data = await supabase.addUser(username, email, password);
         return res.json({ message: 'User added!', data });
     } catch (error) {
         console.log('Error adding user:', error);
@@ -56,7 +58,7 @@ app.post('/login', async (req, res) => {
         return res.status(400).json({ error: 'Missing fields!' });
     }
     try {
-        const hashedPassword = await getPasswordByEmail(email);
+        const hashedPassword = await supabase.getPasswordByEmail(email);
         if (!hashedPassword) {
             return res.status(401).json({ error: 'Invalid credentials!' });
         }
@@ -65,7 +67,7 @@ app.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid password!' });
         }
         const token = jwt.sign({ email }, jwtToken, { expiresIn: '7d' });
-        await saveJwtForEmail(email, token);
+        await supabase.saveJwtForEmail(email, token);
 
         return res.json({ message: 'Login successful!', token });
     } catch (error) {
@@ -75,26 +77,49 @@ app.post('/login', async (req, res) => {
 });
 
 app.post("/upload-pdf", upload.single("pdf"), async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ error: "Missing token!" });
+  }
+  let email;
   try {
-    const token = req.headers.authorization?.split(" ")[1];
     const decoded = jwt.verify(token, jwtToken);
-    const email = decoded.email;
-    // console.log("File received:", req.file);
-    // console.log("Decoded email:", email);
+    email = decoded.email;
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      const decoded = jwt.decode(token);
+      email = decoded?.email;
+      if (!email) {
+        return res.status(401).json({ error: "Invalid token!" });
+      }
+    } else {
+      return res.status(401).json({ error: "Invalid token!" });
+    }
+  }
 
+  try {
     const data = await pdfParse(req.file.buffer);
     const fileName = req.file.originalname;
     const fileText = data.text;
 
-    // console.log("pdfParse result:", data);
-    // console.log("Extracted text:", fileText);
+    console.log("File text length:", fileText);
 
-    await saveCvForEmail(email, fileName, fileText);
+    let keywords;
+    try {
+      keywords = await gemini.extractKeywords(fileText);
+      if (!keywords) throw new Error("Gemini extraction failed");
+    } catch (err) {
+      return res.status(500).json({ error: "Could not extract keywords!" });
+    }
 
-    res.json({ text: fileText, fileName });
+    console.log("Extracted keywords:", keywords);
+
+    await supabase.saveCvForEmail(email, fileName, fileText);
+    await supabase.saveCvKeysForEmail(email, keywords);
+
+    res.json({ text: fileText, fileName, keywords, email });
   } catch (err) {
-    console.error("Eroare la upload-pdf:", err);
-    res.status(500).json({ error: "Eroare la extragerea textului din PDF!" });
+    res.status(500).json({ error: "Error on CV read!" });
   }
 });
 
@@ -104,7 +129,7 @@ app.get("/user-profile", async (req, res) => {
     const decoded = jwt.verify(token, jwtToken);
     const email = decoded.email;
 
-    const data = await getUserProfileByEmail(email);
+    const data = await supabase.getUserProfileByEmail(email);
 
     res.json(data);
   } catch (err) {
@@ -118,7 +143,7 @@ app.post("/update-username", async (req, res) => {
     const decoded = jwt.verify(token, jwtToken);
     const email = decoded.email;
     const { newUsername } = req.body;
-    await updateUsernameForEmail(email, newUsername);
+    await supabase.updateUsernameForEmail(email, newUsername);
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ error: "Could not update username!" });
@@ -134,7 +159,7 @@ app.post("/update-password", async (req, res) => {
     if (!newPassword) {
       return res.status(400).json({ error: "Missing new password!" });
     }
-    await updatePasswordForEmail(email, newPassword);
+    await supabase.updatePasswordForEmail(email, newPassword);
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ error: "Could not update password!" });
@@ -146,7 +171,7 @@ app.post("/delete-account", async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1];
     const decoded = jwt.verify(token, jwtToken);
     const email = decoded.email;
-    deleteUserByEmail(email);
+    await supabase.deleteUserByEmail(email);
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ error: "Could not delete account!" });
@@ -160,12 +185,12 @@ app.post("/forgot-password", async (req, res) => {
         return res.status(400).json({ error: 'Missing email!' });
     }
     try {
-        const hashedPassword = await getPasswordByEmail(email);
+        const hashedPassword = await supabase.getPasswordByEmail(email);
         console.log('Hashed password:', hashedPassword);
         if (hashedPassword) {
             console.log('Email exists, sending reset link...');
             const resetToken = jwt.sign({ email }, jwtToken, { expiresIn: '15m' });
-            await saveJwtForResetPassword(email, resetToken);
+            await supabase.saveJwtForResetPassword(email, resetToken);
             const resetLink = `http://localhost:5173/reset-password?reset-token=${resetToken}`;
             await transporter.sendMail({
                 from: emailUser,
@@ -190,7 +215,7 @@ app.post("/delete-reset-token", async (req, res) => {
     try {
         const decoded = jwt.verify(token, jwtToken);
         const email = decoded.email;
-        await deleteJwtForResetPassword(email);
+        await supabase.deleteJwtForResetPassword(email);
         return res.json({ message: 'Reset token deleted!' });
     } catch (error) {
         console.log('Error deleting reset token:', error);
@@ -216,7 +241,7 @@ app.post("/validate-reset-token", async (req, res) => {
     const decoded = jwt.verify(reset_token, jwtToken);
     const email = decoded.email;
     console.log('Decoded email:', email);
-    const exists = await checkResetTokenInDB(email);
+    const exists = await supabase.checkResetTokenInDB(email);
     console.log('Token exists in DB:', exists);
     res.json({ valid: !!exists });
   } catch {
@@ -224,33 +249,32 @@ app.post("/validate-reset-token", async (req, res) => {
   }
 });
 
-app.post("/get_gemini_keywords", async (req, res) => {
+app.post("/get-jobs", async (req, res) => {
+    console.log('Received request to get jobs');
     const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-        return res.status(401).json({ error: "Missing token!" });
-    }
-    let email;
+    const decoded = jwt.decode(token);
+    const params = req.body;
+    // if (!keywords) {
+    //     return res.status(400).json({ error: 'Missing keywords!' });
+    // }
+    const keywords = await supabase.getKeyWordsForEmail(decoded.email);
+    // params.keywords = keywords;
+    params.companysearch = "false";
+    console.log('Search parameters:', params);
+    console.log('Keywords from DB:', keywords);
     try {
-        const decoded = jwt.verify(token, jwtToken);
-        email = decoded.email;
-    } catch {
-        return res.status(401).json({ error: "Invalid token!" });
-    }
-
-    try {
-        const cvData = await getCvForEmail(email);
-        console.log('CV data:', cvData);
-        if (!cvData) {
-            return res.status(404).json({ error: "CV not found!" });
-        }
-        const keywords = await gemini.extractKeywords(cvData);
-        console.log('Extracted keywords:', keywords);
-        res.json({ keywords, email });
+        console.log('Strting fetching API');
+        const jobs = await joobleApi.searchJobs(params);
+        // const firstSnippet = jobs.jobs && jobs.jobs.length > 0 ? jobs.jobs[0].snippet : null;
+        // console.log('Jobs fetched:', firstSnippet);
+        // console.log('Jobs fetched:', jobs);
+        return res.json(jobs);
     } catch (error) {
-        console.log('Error getting keywords:', error);
+        console.log('Error fetching jobs:', error);
         res.status(500).json({ error: 'Server error!' });
     }
 });
+
 
 const PORT = 3000;
 app.listen(PORT, () => {
