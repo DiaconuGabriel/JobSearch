@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const JOBS_PER_PAGE = 10;
 const PAGINATION_WINDOW = 5;
+const MAX_JOBS_TO_SHOW = 30;
 
 function calculateMatchPercentage(keywordsWithScores, snippet, title, seniorityWithScores) {
   const snippetText = snippet ? snippet.toLowerCase() : "";
@@ -11,8 +12,8 @@ function calculateMatchPercentage(keywordsWithScores, snippet, title, seniorityW
   let maxScore = 0;
 
   keywordsWithScores.forEach(({ word, score }) => {
-    maxScore += score * 1.1;
-    if (titleText.includes(word)) totalScore += score * 1.2;
+    maxScore += score * 1.01;
+    if (titleText.includes(word)) totalScore += score * 1.1;
     else if (snippetText.includes(word)) totalScore += score;
   });
 
@@ -20,12 +21,12 @@ function calculateMatchPercentage(keywordsWithScores, snippet, title, seniorityW
   let seniorityBonus = 0;
   seniorityWithScores.forEach(({ word, score }) => {
     if (titleText.includes(word)) seniorityBonus += score;
-    else if (snippetText.includes(word)) seniorityBonus += Math.round(score * 0.1);
+    else if (snippetText.includes(word)) seniorityBonus += Math.round(score * 0.2);
   });
 
   //Final score calculation
-  const percentScore = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
-  return Math.min(100, percentScore + seniorityBonus);
+  const percentScore = maxScore > 0 ? Math.round((totalScore / maxScore) * 95) : 0;
+  return Math.min(95, percentScore + seniorityBonus);
 }
 
 function removeDuplicates(jobs) {
@@ -37,6 +38,44 @@ function removeDuplicates(jobs) {
     return true;
   });
 }
+
+const JobCard = ({ job }) => (
+  <div className="bg-white rounded-xl shadow p-6 flex flex-col gap-2 border border-gray-100">
+    <div className="flex flex-row justify-between items-center gap-4">
+      <div className="flex flex-col items-center min-w-[70px]">
+        <img
+          src={`http://localhost:3000/get-logo?company=${encodeURIComponent(job.company)}`}
+          alt={job.company}
+          className="w-12 h-12 object-contain rounded mb-2 border"
+          onError={e => { e.target.src = 'https://placehold.co/40x40?text=?'; }}
+        />
+        <div className="text-purple-700 font-bold text-lg">{job.match}%</div>
+        <div className="text-xs text-gray-400">Match</div>
+      </div>
+
+      <div className="flex-1 flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+        <div>
+          <h3 className="text-xl font-bold text-blue-800">{job.title}</h3>
+          <div className="text-gray-600">{job.company} &middot; {job.location}</div>
+          {job.salary && <div className="text-green-700 font-semibold">Salary: {job.salary}</div>}
+          <div className="text-sm text-gray-500">{job.type}</div>
+        </div>
+        <a
+          href={job.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 md:mt-0 px-4 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700 transition text-center"
+        >
+          Apply
+        </a>
+      </div>
+    </div>
+    <div className="mt-2 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: job.snippet }} />
+    <div className="text-xs text-gray-400 mt-2">
+      Source: {job.source} &middot; Updated: {job.updated && job.updated.slice(0, 10)}
+    </div>
+  </div>
+);
 
 const Jobs = ({ jobs, keywordsObj, seniorityKeywordsObj }) => {
   const [page, setPage] = useState(1);
@@ -51,6 +90,7 @@ const Jobs = ({ jobs, keywordsObj, seniorityKeywordsObj }) => {
     word: word.toLowerCase(),
     score
   }));
+
   const jobsWithMatch = uniqueJobs.map(job => ({
     ...job,
     match: calculateMatchPercentage(
@@ -61,9 +101,10 @@ const Jobs = ({ jobs, keywordsObj, seniorityKeywordsObj }) => {
     )
   }));
 
-  const sortedJobs = jobsWithMatch.sort((a, b) => b.match - a.match);
+  const sortedJobs = jobsWithMatch.sort((a, b) => b.match - a.match).slice(0, MAX_JOBS_TO_SHOW);
 
   const totalPages = Math.ceil(sortedJobs.length / JOBS_PER_PAGE);
+  const showPagination = sortedJobs.length > JOBS_PER_PAGE;
   const startIdx = (page - 1) * JOBS_PER_PAGE;
   const endIdx = startIdx + JOBS_PER_PAGE;
   const jobsToShow = sortedJobs.slice(startIdx, endIdx);
@@ -79,37 +120,13 @@ const Jobs = ({ jobs, keywordsObj, seniorityKeywordsObj }) => {
   return (
     <div className="w-full max-w-5xl mx-auto mt-8 flex flex-col gap-6">
       {jobsToShow.map(job => (
-        <div
+        <JobCard
           key={job.id}
-          className="bg-white rounded-xl shadow p-6 flex flex-col gap-2 border border-gray-100"
-        >
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-            <div>
-              <h3 className="text-xl font-bold text-blue-800">{job.title}</h3>
-              <div className="text-gray-600">{job.company} &middot; {job.location}</div>
-              {job.salary && <div className="text-green-700 font-semibold">Salary: {job.salary}</div>}
-              <div className="text-sm text-gray-500">{job.type}</div>
-              <div className="text-sm text-purple-700 font-semibold mt-1">
-                Match: {job.match}%
-              </div>
-            </div>
-            <a
-              href={job.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 md:mt-0 px-4 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700 transition"
-            >
-              Apply
-            </a>
-          </div>
-          <div className="mt-2 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: job.snippet }} />
-          <div className="text-xs text-gray-400 mt-2">
-            Source: {job.source} &middot; Updated: {job.updated && job.updated.slice(0, 10)}
-          </div>
-        </div>
+          job={job}
+        />
       ))}
 
-      {totalPages > 1 && (
+      {showPagination && totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 mt-5 mb-10">
           <button
             className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"

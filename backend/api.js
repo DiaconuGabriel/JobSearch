@@ -11,6 +11,8 @@ const jwt = require('jsonwebtoken');
 const supabase = require('./supabase');
 const cors = require('cors');
 const upload = multer();
+const LogoApi = require('./LogoApi');
+const logoApi = new LogoApi(process.env.LOGO_API_KEY);
 const joobleApi = new JoobleApi(process.env.JOOBLE_API_KEY);
 const jwtToken = process.env.JWT_SECRET;
 const emailUser = process.env.EMAIL_USER;
@@ -281,16 +283,30 @@ app.post("/get-jobs", async (req, res) => {
     if (params.seniority) {
         switch (params.seniority) {
             case "Junior":
-                seniorityKeywords = "Junior Entry-level";
-                seniorityKeywordsObj = { "Junior": 100, "Entry-level": 90 };
+                seniorityKeywords = "Junior Entry-level Graduate Intern Internship Trainee No experience New Grad Starter Early career Associate Student Recent graduate Beginner Fără experiență";
+                seniorityKeywordsObj = { "Junior": 100,
+                                        "Entry-level": 95,
+                                        "Graduate": 90,
+                                        "Intern": 85,
+                                        "Internship": 85,
+                                        "Trainee": 80,
+                                        "No experience": 70,
+                                        "New Grad": 70,
+                                        "Starter": 65,
+                                        "Early career": 65,
+                                        "Associate": 60,
+                                        "Student": 55,
+                                        "Recent graduate": 55,
+                                        "Beginner": 50,
+                                        "Fără experiență": 50 };
                 break;
             case "Mid":
                 seniorityKeywords = "Mid Middle Intermediate";
-                seniorityKeywordsObj = { "Mid": 100, "Middle": 90, "Intermediate": 80 };
+                seniorityKeywordsObj = { "Mid": 80, "Middle": 75, "Intermediate": 70 };
                 break;
             case "Senior":
                 seniorityKeywords = "Senior Lead Expert";
-                seniorityKeywordsObj = { "Senior": 100, "Lead": 90, "Expert": 80 };
+                seniorityKeywordsObj = { "Senior": 80, "Lead": 75, "Expert": 70 };
                 break;
             default:
                 break;
@@ -321,6 +337,33 @@ app.post("/get-jobs", async (req, res) => {
     } catch (error) {
         console.log('Error fetching jobs:', error);
         res.status(500).json({ error: 'Server error!' });
+    }
+});
+
+const logoCache = {};
+
+app.get("/get-logo", async (req, res) => {
+    const { company } = req.query;
+    if (!company) {
+        return res.redirect('https://placehold.co/40x40?text=?');
+    }
+    let domain = company;
+    if (!domain.includes('.')) {
+        domain = company.replace(/\s+/g, '').toLowerCase() + '.com';
+    }
+
+    if (logoCache[domain]) {
+        res.set('Content-Type', 'image/png');
+        return res.send(logoCache[domain]);
+    }
+
+    try {
+        const logoBuffer = await logoApi.getLogo(domain);
+        logoCache[domain] = logoBuffer;
+        res.set('Content-Type', 'image/png');
+        return res.send(logoBuffer);
+    } catch (err) {
+        return res.redirect(`https://logo.clearbit.com/${domain}`);
     }
 });
 
