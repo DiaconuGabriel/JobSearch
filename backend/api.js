@@ -254,21 +254,70 @@ app.post("/get-jobs", async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1];
     const decoded = jwt.decode(token);
     const params = req.body;
-    // if (!keywords) {
-    //     return res.status(400).json({ error: 'Missing keywords!' });
-    // }
-    const keywords = await supabase.getKeyWordsForEmail(decoded.email);
-    // params.keywords = keywords;
+    let keywords = await supabase.getKeyWordsForEmail(decoded.email);
+    if (typeof keywords === "string") {
+      keywords = keywords.trim();
+        if (keywords.startsWith("```json")) {
+            keywords = keywords.replace(/^```json/, '').replace(/```$/, '').trim();
+        }
+    }
+    let keywordsObj = JSON.parse(keywords);
+    let keywordsStr = Object.keys(keywordsObj).join(" ");
+
+    // console.log('Keywords from DB:', keywordsStr);
+    // console.log('Typeof keywords:', typeof keywords);
+
     params.companysearch = "false";
-    console.log('Search parameters:', params);
-    console.log('Keywords from DB:', keywords);
+    const maxjobs = 1000;
+    const pageSize = 50;
+    const maxpage = (maxjobs / pageSize);
+    let allJobs = [];
+    let page = 0;
+    let totalCount = 0;
+
+    let seniorityKeywords = "";
+    let seniorityKeywordsObj = {};
+    console.log(('Params for seniority:', params.seniority)); 
+    if (params.seniority) {
+        switch (params.seniority) {
+            case "Junior":
+                seniorityKeywords = "Junior Entry-level";
+                seniorityKeywordsObj = { "Junior": 100, "Entry-level": 90 };
+                break;
+            case "Mid":
+                seniorityKeywords = "Mid Middle Intermediate";
+                seniorityKeywordsObj = { "Mid": 100, "Middle": 90, "Intermediate": 80 };
+                break;
+            case "Senior":
+                seniorityKeywords = "Senior Lead Expert";
+                seniorityKeywordsObj = { "Senior": 100, "Lead": 90, "Expert": 80 };
+                break;
+            default:
+                break;
+        }
+        keywordsStr = seniorityKeywords + " " + keywordsStr;
+    }
+
+    delete params.seniority;
+    console.log('Final keywords for search:', keywordsStr);
     try {
-        console.log('Strting fetching API');
-        const jobs = await joobleApi.searchJobs(params);
-        // const firstSnippet = jobs.jobs && jobs.jobs.length > 0 ? jobs.jobs[0].snippet : null;
-        // console.log('Jobs fetched:', firstSnippet);
-        // console.log('Jobs fetched:', jobs);
-        return res.json(jobs);
+        do {
+            params.page = page;
+            params.ResultOnPage = pageSize;
+            params.keywords = keywords;
+            const jobsPage = await joobleApi.searchJobs(params);
+            if (jobsPage.jobs && jobsPage.jobs.length > 0) {
+                allJobs = allJobs.concat(jobsPage.jobs);
+            }
+            totalCount = jobsPage.totalCount || allJobs.length;
+            page++;
+        } while (allJobs.length < Math.min(maxjobs, totalCount) && page <= maxpage);
+
+        const count = allJobs.length;
+        console.log('Keywords', keywords);
+        console.log('Seniority Keywords', seniorityKeywords);
+        console.log(`Found ${count} jobs (max: ${maxjobs}, totalCount: ${totalCount})`);
+        return res.json({ jobs: allJobs, keywordsObj, count, totalCount, seniorityKeywordsObj});
     } catch (error) {
         console.log('Error fetching jobs:', error);
         res.status(500).json({ error: 'Server error!' });

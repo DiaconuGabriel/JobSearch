@@ -4,33 +4,33 @@ const locations = [
   "Remote",
   "Romania",
   "Europe",
+  "Germany",
+  "Poland"
 ];
 
-const radiusOptions = [
-  { label: "5 km", value: 5 },
-  { label: "10 km", value: 10 },
-  { label: "25 km", value: 25 },
-  { label: "50 km", value: 50 },
-  { label: "100 km", value: 100 },
+const seniorityLevels = [
+  "Junior",
+  "Mid",
+  "Senior",
 ];
 
 const Filters = ({ onChange, onJobsFetched}) => {
   const [location, setLocation] = useState("");
-  const [radius, setRadius] = useState("");
+  const [seniority, setSeniority] = useState("");
   const [salary, setSalary] = useState("");
   const [match, setMatch] = useState("");
   const [error, setError] = useState("");
 
   const handleChange = () => {
     if (onChange) {
-      onChange({ location, radius, salary, match });
+      onChange({ location, seniority, salary, match });
     }
   };
 
   const handleSearch = async () => {
     const params = {};
     if (location) params.location = location;
-    if (radius) params.radius = String(radius);
+    if (seniority) params.seniority = seniority;
     if (salary) params.salary = parseInt(salary, 10);
     try {
       console.log("Searching with params:", params);
@@ -75,15 +75,15 @@ const Filters = ({ onChange, onJobsFetched}) => {
       </div>
 
       <div className="flex flex-col justify-start basis-48">
-        <label className="block mb-1 font-semibold text-gray-700">Radius (km)</label>
+        <label className="block mb-1 font-semibold text-gray-700">Seniority level</label>
         <select
           className="border rounded px-3 py-2 min-w-[100px] w-full"
-          value={radius}
-          onChange={e => { setRadius(e.target.value); handleChange(); }}
+          value={seniority}
+          onChange={e => { setSeniority(e.target.value); handleChange(); }}
         >
           <option value="">Any</option>
-          {radiusOptions.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          {seniorityLevels.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
           ))}
         </select>
       </div>

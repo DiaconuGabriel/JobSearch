@@ -17,9 +17,13 @@ const LandingPage = () => {
   }, [navigate]);
 
   const [jobs, setJobs] = useState([]);
+  const [keywordsObj, setKeywordsObj] = useState({});
+  const [seniorityKeywordsObj, setSeniorityKeywordsObj] = useState({});
 
   const handleJobsFetched = (data) => {
     setJobs(data.jobs || []);
+    setKeywordsObj(data.keywordsObj || {});
+    setSeniorityKeywordsObj(data.seniorityKeywordsObj || {});
   };
 
   return (
@@ -29,8 +33,11 @@ const LandingPage = () => {
         <CVdrop /> 
       </div>
       <Filters onJobsFetched={handleJobsFetched}/>
-      <Jobs jobs={jobs} />
-      
+      <Jobs
+        jobs={jobs}
+        keywordsObj={keywordsObj}
+        seniorityKeywordsObj={seniorityKeywordsObj}
+      />
     </div>
   );
 };
