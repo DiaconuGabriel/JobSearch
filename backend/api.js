@@ -201,7 +201,7 @@ app.post("/forgot-password", async (req, res) => {
             // console.log('Email exists, sending reset link...');
             const resetToken = jwt.sign({ email }, jwtToken, { expiresIn: '15m' });
             await supabase.saveJwtForResetPassword(email, resetToken);
-            const resetLink = `https://jobsearch-n4zw.onrender.com/reset-password?reset-token=${resetToken}`;
+            const resetLink = `https://jobsearch-n4zw.onrender.com/reset-password-page?reset-token=${resetToken}`;
             await transporter.sendMail({
                 from: emailUser,
                 to: email,

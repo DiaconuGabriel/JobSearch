@@ -99,10 +99,10 @@ const RegisterForm = () => {
       <div className="text-center text-base font-poppins">
         Already have an account?{" "}
         <Link
-          to="/login"
+          to="/login-page"
           className="text-blue-600 no-underline font-semibold font-poppins"
         >
-          Sign up
+          Sign in
         </Link>
       </div>
     </div>

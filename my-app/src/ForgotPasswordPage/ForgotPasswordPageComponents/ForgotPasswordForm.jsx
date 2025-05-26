@@ -84,7 +84,7 @@ const ForgotPasswordForm = () => {
         )}
       </form>
       <Link
-        to="/login"
+        to="/login-page"
         className="mt-4 w-full inline-block"
       >
         <button
