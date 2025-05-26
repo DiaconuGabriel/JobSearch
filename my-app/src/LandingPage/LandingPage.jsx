@@ -11,7 +11,7 @@ const LandingPage = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/login");
+      navigate("/login-page", { replace: true });
     }
   }, [navigate]);
 

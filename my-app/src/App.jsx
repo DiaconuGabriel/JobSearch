@@ -12,12 +12,12 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Navigate to="/register" replace />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/register-page" element={<RegisterPage />} />
+        <Route path="/login-page" element={<LoginPage />} />
+        <Route path="/forgot-password-page" element={<ForgotPasswordPage />} />
         <Route path="/landing-page" element={<LandingPage />} />
-        <Route path="/account" element={<SettingsPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/account-page" element={<SettingsPage />} />
+        <Route path="/reset-password-page" element={<ResetPasswordPage />} />
       </Routes>
     </Router>
   );

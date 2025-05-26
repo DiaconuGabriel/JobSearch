@@ -27,7 +27,7 @@ const ResetPasswordPage = () => {
       .then(data => {
         if (!data.valid) {
           setMessage("This page cannot be accessed.");
-          setTimeout(() => navigate("/login"), 1500);
+          setTimeout(() => navigate("/login-page", {replace : true}), 1500);
           setMessageType("error");
           setCriticalError(true);
         }
@@ -35,7 +35,7 @@ const ResetPasswordPage = () => {
       .catch(() => {
         setMessage("Server error!");
         setMessageType("error");
-        setTimeout(() => navigate("/login"), 1500);
+        setTimeout(() => navigate("/login-page", {replace : true}), 1500);
         setCriticalError(false);
       });
   }, [reset_token, navigate]);
@@ -63,7 +63,7 @@ const ResetPasswordPage = () => {
         });
         setMessage("Password changed successfully!");
         setMessageType("success");
-        setTimeout(() => navigate("/login"), 1500);
+        setTimeout(() => navigate("/login-page", { replace: true }), 1500);
       } else {
         setMessage(data.error || "Could not reset password!");
         setMessageType("error");

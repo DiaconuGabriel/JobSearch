@@ -35,7 +35,7 @@ const LoginForm = () => {
         localStorage.setItem("token", data.token);
         setEmail("");
         setPassword("");
-        navigate("/landing-page");
+        navigate("/landing-page", { replace: true });
       } else {
         setMessage(data.error || "Login failed!");
         setMessageType("error");

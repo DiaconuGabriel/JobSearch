@@ -24,7 +24,7 @@ const SettingsPage = () => {
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (!token) {
-        navigate("/login");
+        navigate("/login-page", { replace: true });
         }
     }, [navigate]);
 
@@ -133,7 +133,7 @@ const SettingsPage = () => {
                 setMessageType("success");
                 localStorage.removeItem("token");
                 setTimeout(() => {
-                    navigate("/register");
+                    navigate("/register-page", { replace: true });
                 }, 250);
             } else {
                 setMessage(data.error || "Could not delete account!");
