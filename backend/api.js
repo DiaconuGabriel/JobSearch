@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const bodyParser = require('body-parser');
 const GeminiApi = require('./GeminiApi');
 const JoobleApi = require('./joobleApi');
@@ -29,6 +30,7 @@ app.use(cors({
     credentials: false,
 }));
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'build')));
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -36,6 +38,10 @@ const transporter = nodemailer.createTransport({
         user: emailUser,
         pass: emailPass
     }
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 app.post('/register', async (req, res) => {
