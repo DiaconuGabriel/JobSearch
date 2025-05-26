@@ -26,6 +26,16 @@ const SettingsPage = () => {
         if (!token) {
         navigate("/login-page", { replace: true });
         }
+
+        const handleStorage = (event) => {
+            if (event.key === "token" && event.newValue === null) {
+            navigate("/login-page", { replace: true });
+            }
+        };
+        window.addEventListener("storage", handleStorage);
+
+        return () => window.removeEventListener("storage", handleStorage);
+
     }, [navigate]);
 
     useEffect(() => {
