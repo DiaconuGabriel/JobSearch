@@ -6,7 +6,7 @@ class GeminiApi {
 
     async extractKeywords(cvText) {
         const fetch = (await import('node-fetch')).default;
-        const prompt = `Extrage fiecare cuvant din următorul CV si atribuie scor intre 1 si 100 pentru relevanta, sa nu le pui pe cele de legatura si pe cele care se repeta sau informatii personale, și returnează-le ca un dictionar. Fii dur la scor. Nimic altceva ca cuvinte de legatura. Aici este CV-ul: "${cvText}"`;
+        const prompt = `Extrage fiecare cuvant din următorul CV si atribuie scor intre 1 si 100 pentru relevanta, sa nu le pui pe cele de legatura si pe cele care se repeta sau informatii personale si daca gasesti ceva cu numere pune sa fie un sinonim ca sa nu contina numere, și returnează-le ca un dictionar. Fii dur la scor. Nimic altceva ca cuvinte de legatura. Aici este CV-ul: "${cvText}"`;
 
         const body = {
             contents: [

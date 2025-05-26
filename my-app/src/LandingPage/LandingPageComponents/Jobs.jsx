@@ -1,30 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
 
 const JOBS_PER_PAGE = 10;
 const PAGINATION_WINDOW = 5;
-const MAX_JOBS_TO_SHOW = 30;
+const MAX_JOBS_TO_SHOW = 100;
 
-function calculateMatchPercentage(keywordsWithScores, snippet, title, seniorityWithScores) {
+function calculateMatchPercentage(keywordsWithScores, snippet, location, title, seniorityWithScores, actlocation = "") {
   const snippetText = snippet ? snippet.toLowerCase() : "";
   const titleText = title ? title.toLowerCase() : "";
+  const locationText = location ? location.toLowerCase() : "";
+  const actlocationText = actlocation ? actlocation.toLowerCase() : "";
 
   let totalScore = 0;
   let maxScore = 0;
 
   keywordsWithScores.forEach(({ word, score }) => {
-    maxScore += score * 1.01;
-    if (titleText.includes(word)) totalScore += score * 1.1;
+    maxScore += score * 1.5;
+    if (titleText.includes(word)) totalScore += score * 1.5;
     else if (snippetText.includes(word)) totalScore += score;
+    // console.log(`locationText: ${locationText}, actlocationText: ${actlocationText}`);
+    if (actlocationText && locationText.includes(actlocationText)) {
+      totalScore += score * 2;
+    }
   });
 
-  //Seniority bonus
+  // Bonus pentru senioritate
   let seniorityBonus = 0;
   seniorityWithScores.forEach(({ word, score }) => {
     if (titleText.includes(word)) seniorityBonus += score;
-    else if (snippetText.includes(word)) seniorityBonus += Math.round(score * 0.2);
+    else if (snippetText.includes(word)) seniorityBonus += Math.round(score * 0.5);
   });
 
-  //Final score calculation
+  // Scor final
   const percentScore = maxScore > 0 ? Math.round((totalScore / maxScore) * 95) : 0;
   return Math.min(95, percentScore + seniorityBonus);
 }
@@ -44,7 +50,7 @@ const JobCard = ({ job }) => (
     <div className="flex flex-row justify-between items-center gap-4">
       <div className="flex flex-col items-center min-w-[70px]">
         <img
-          src={`http://localhost:3000/get-logo?company=${encodeURIComponent(job.company)}`}
+          src={`http://localhost:3000/get-logo?company=${encodeURIComponent(job.company)}&source=${encodeURIComponent(job.source)}`}
           alt={job.company}
           className="w-12 h-12 object-contain rounded mb-2 border"
           onError={e => { e.target.src = 'https://placehold.co/40x40?text=?'; }}
@@ -77,7 +83,7 @@ const JobCard = ({ job }) => (
   </div>
 );
 
-const Jobs = ({ jobs, keywordsObj, seniorityKeywordsObj }) => {
+const Jobs = ({ jobs, keywordsObj, seniorityKeywordsObj, loading, selectedLocation,  }) => {
   const [page, setPage] = useState(1);
 
   const uniqueJobs = removeDuplicates(jobs);
@@ -96,8 +102,10 @@ const Jobs = ({ jobs, keywordsObj, seniorityKeywordsObj }) => {
     match: calculateMatchPercentage(
       keywordsWithScores,
       job.snippet,
+      job.location,
       job.title,
-      seniorityWithScores
+      seniorityWithScores,
+      selectedLocation 
     )
   }));
 
@@ -115,6 +123,22 @@ const Jobs = ({ jobs, keywordsObj, seniorityKeywordsObj }) => {
   const pageNumbers = [];
   for (let i = windowStart; i <= windowEnd; i++) {
     pageNumbers.push(i);
+  }
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-5xl mx-auto mt-8 flex justify-center items-center h-40">
+        <span className="text-lg text-gray-500 animate-pulse">Looking for jobs...</span>
+      </div>
+    );
+  }
+
+  if (!loading && (!jobsToShow || jobsToShow.length === 0)) {
+    return (
+      <div className="w-full max-w-5xl mx-auto mt-8 flex justify-center items-center h-40">
+        <span className="text-lg text-gray-500">No jobs found.</span>
+      </div>
+    );
   }
 
   return (

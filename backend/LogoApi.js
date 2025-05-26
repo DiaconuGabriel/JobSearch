@@ -8,10 +8,12 @@ class LogoApi {
         const fetch = (await import('node-fetch')).default;
         const url = `${this.baseUrl}${encodeURIComponent(text)}?token=${this.apiKey}`;
         const response = await fetch(url, {
-            method: "POST",
+            method: "GET",
             headers: { "Content-Type": "application/json" },
 
         });
+
+        // console.log(response);
 
         if (!response.ok) {
             throw new Error(`Logo API error: ${response.status} ${response.statusText}`);

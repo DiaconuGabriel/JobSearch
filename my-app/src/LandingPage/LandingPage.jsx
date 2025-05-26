@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 const LandingPage = () => {
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,11 +18,15 @@ const LandingPage = () => {
   const [jobs, setJobs] = useState([]);
   const [keywordsObj, setKeywordsObj] = useState({});
   const [seniorityKeywordsObj, setSeniorityKeywordsObj] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [actualLocation, setActualLocation] = useState("");
 
   const handleJobsFetched = (data) => {
     setJobs(data.jobs || []);
     setKeywordsObj(data.keywordsObj || {});
     setSeniorityKeywordsObj(data.seniorityKeywordsObj || {});
+    setLoading(false);
+    setActualLocation(data.location || ""); 
   };
 
   return (
@@ -32,11 +35,13 @@ const LandingPage = () => {
       <div className="flex flex-col p-6">
         <CVdrop /> 
       </div>
-      <Filters onJobsFetched={handleJobsFetched}/>
+      <Filters onJobsFetched={handleJobsFetched} setLoading={setLoading} />
       <Jobs
         jobs={jobs}
         keywordsObj={keywordsObj}
         seniorityKeywordsObj={seniorityKeywordsObj}
+        loading={loading}
+        selectedLocation={actualLocation}
       />
     </div>
   );

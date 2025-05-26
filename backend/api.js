@@ -12,6 +12,8 @@ const supabase = require('./supabase');
 const cors = require('cors');
 const upload = multer();
 const LogoApi = require('./LogoApi');
+const Clearbit = require('./ClearBit');
+const ClearbitApi = new Clearbit();
 const logoApi = new LogoApi(process.env.LOGO_API_KEY);
 const joobleApi = new JoobleApi(process.env.JOOBLE_API_KEY);
 const jwtToken = process.env.JWT_SECRET;
@@ -49,7 +51,7 @@ app.post('/register', async (req, res) => {
         const data = await supabase.addUser(username, email, password);
         return res.json({ message: 'User added!', data });
     } catch (error) {
-        console.log('Error adding user:', error);
+        // console.log('Error adding user:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -73,7 +75,7 @@ app.post('/login', async (req, res) => {
 
         return res.json({ message: 'Login successful!', token });
     } catch (error) {
-        console.log('Error logging in:', error);
+        // console.log('Error logging in:', error);
         res.status(500).json({ error: 'Server error!' });
     }
 });
@@ -104,7 +106,7 @@ app.post("/upload-pdf", upload.single("pdf"), async (req, res) => {
     const fileName = req.file.originalname;
     const fileText = data.text;
 
-    console.log("File text length:", fileText);
+    // console.log("File text length:", fileText);
 
     let keywords;
     try {
@@ -114,7 +116,7 @@ app.post("/upload-pdf", upload.single("pdf"), async (req, res) => {
       return res.status(500).json({ error: "Could not extract keywords!" });
     }
 
-    console.log("Extracted keywords:", keywords);
+    // console.log("Extracted keywords:", keywords);
 
     await supabase.saveCvForEmail(email, fileName, fileText);
     await supabase.saveCvKeysForEmail(email, keywords);
@@ -182,15 +184,15 @@ app.post("/delete-account", async (req, res) => {
 
 app.post("/forgot-password", async (req, res) => {
     const { email } = req.body;
-    console.log('Received email:', email);
+    // console.log('Received email:', email);
     if (!email) {
         return res.status(400).json({ error: 'Missing email!' });
     }
     try {
         const hashedPassword = await supabase.getPasswordByEmail(email);
-        console.log('Hashed password:', hashedPassword);
+        // console.log('Hashed password:', hashedPassword);
         if (hashedPassword) {
-            console.log('Email exists, sending reset link...');
+            // console.log('Email exists, sending reset link...');
             const resetToken = jwt.sign({ email }, jwtToken, { expiresIn: '15m' });
             await supabase.saveJwtForResetPassword(email, resetToken);
             const resetLink = `http://localhost:5173/reset-password?reset-token=${resetToken}`;
@@ -200,11 +202,11 @@ app.post("/forgot-password", async (req, res) => {
                 subject: "Password Reset",
                 text: `Click the following link to reset your password: ${resetLink}`
             });
-            console.log('Finished sending email');
+            // console.log('Finished sending email');
         }
         return res.json({ message: 'If the email exists, you will receive a recovery email.' });
     } catch (error) {
-        console.log('Error sending password reset link:', error);
+        // console.log('Error sending password reset link:', error);
         res.status(500).json({ error: 'Server error!' });
     }
 });
@@ -220,7 +222,7 @@ app.post("/delete-reset-token", async (req, res) => {
         await supabase.deleteJwtForResetPassword(email);
         return res.json({ message: 'Reset token deleted!' });
     } catch (error) {
-        console.log('Error deleting reset token:', error);
+        // console.log('Error deleting reset token:', error);
         res.status(500).json({ error: 'Server error!' });
     }
 });
@@ -237,14 +239,14 @@ app.get("/validate-token", (req, res) => {
 
 app.post("/validate-reset-token", async (req, res) => {
   const reset_token = req.headers.authorization?.split(" ")[1];
-  console.log('Received reset token:', reset_token);
+  // console.log('Received reset token:', reset_token);
   // if (!reset_token) return res.json({ valid: false });
   try {
     const decoded = jwt.verify(reset_token, jwtToken);
     const email = decoded.email;
-    console.log('Decoded email:', email);
+    // console.log('Decoded email:', email);
     const exists = await supabase.checkResetTokenInDB(email);
-    console.log('Token exists in DB:', exists);
+    // console.log('Token exists in DB:', exists);
     res.json({ valid: !!exists });
   } catch {
     res.json({ valid: false });
@@ -252,7 +254,7 @@ app.post("/validate-reset-token", async (req, res) => {
 });
 
 app.post("/get-jobs", async (req, res) => {
-    console.log('Received request to get jobs');
+    // console.log('Received request to get jobs');
     const token = req.headers.authorization?.split(" ")[1];
     const decoded = jwt.decode(token);
     const params = req.body;
@@ -279,7 +281,7 @@ app.post("/get-jobs", async (req, res) => {
 
     let seniorityKeywords = "";
     let seniorityKeywordsObj = {};
-    console.log(('Params for seniority:', params.seniority)); 
+    // console.log(('Params for seniority:', params.seniority)); 
     if (params.seniority) {
         switch (params.seniority) {
             case "Junior":
@@ -315,7 +317,7 @@ app.post("/get-jobs", async (req, res) => {
     }
 
     delete params.seniority;
-    console.log('Final keywords for search:', keywordsStr);
+    // console.log('Final keywords for search:', keywordsStr);
     try {
         do {
             params.page = page;
@@ -330,40 +332,48 @@ app.post("/get-jobs", async (req, res) => {
         } while (allJobs.length < Math.min(maxjobs, totalCount) && page <= maxpage);
 
         const count = allJobs.length;
-        console.log('Keywords', keywords);
-        console.log('Seniority Keywords', seniorityKeywords);
+        // console.log('Keywords', keywords);
+        // console.log('Seniority Keywords', seniorityKeywords);
         console.log(`Found ${count} jobs (max: ${maxjobs}, totalCount: ${totalCount})`);
-        return res.json({ jobs: allJobs, keywordsObj, count, totalCount, seniorityKeywordsObj});
+        console.log('Params:', params.location);
+        return res.json({ jobs: allJobs, keywordsObj, count, totalCount, seniorityKeywordsObj, location: params.location});
     } catch (error) {
-        console.log('Error fetching jobs:', error);
+        // console.log('Error fetching jobs:', error);
         res.status(500).json({ error: 'Server error!' });
     }
 });
 
-const logoCache = {};
-
 app.get("/get-logo", async (req, res) => {
-    const { company } = req.query;
+    const { company, source } = req.query;
+    // console.log('Received request for logo with company:', company, 'and source:', source);
     if (!company) {
         return res.redirect('https://placehold.co/40x40?text=?');
     }
-    let domain = company;
-    if (!domain.includes('.')) {
-        domain = company.replace(/\s+/g, '').toLowerCase() + '.com';
-    }
+    // console.log('Company:', company);
+    let domain = company.trim();
+      domain = domain
+      .replace(/\b(inc|inc\.|ltd|ltd\.|s\.a\.|sa|srl|corp|corporation|co|llc|plc|gmbh|bv|ag|spa|sas|limited|company|group)\b/gi, '')
+      .replace(/[,\'\"\.\s&]/g, '')
+      .replace(/\s+/g, '')
+      + '.com';
 
-    if (logoCache[domain]) {
-        res.set('Content-Type', 'image/png');
-        return res.send(logoCache[domain]);
-    }
+    // console.log('Final domain for logo (company):', domain);
 
     try {
         const logoBuffer = await logoApi.getLogo(domain);
-        logoCache[domain] = logoBuffer;
         res.set('Content-Type', 'image/png');
         return res.send(logoBuffer);
     } catch (err) {
-        return res.redirect(`https://logo.clearbit.com/${domain}`);
+        try {
+            // console.log(`Incerc cu Clearbit pentru domeniul: ${domain}`);
+            const logoBuffer = await logoApi.getLogo(source);
+            res.set('Content-Type', 'image/png');
+            return res.send(logoBuffer);
+        } catch (err2) {
+            // console.log(`Nu am găsit logo pentru domeniul: ${domain}`);
+            return res.redirect('https://logo.clearbit.com/' + source);
+        }
+        
     }
 });
 

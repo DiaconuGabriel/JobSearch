@@ -1,11 +1,11 @@
 import { useState } from "react";
 
-const locations = [
-  "Remote",
-  "Romania",
-  "Europe",
-  "Germany",
-  "Poland"
+const locations = ["Remote","Romania","Europe","Austria","Belgium",
+                  "Bulgaria","Croatia","Cyprus","Czech Republic",
+                  "Denmark","Estonia","Finland","France","Germany",
+                  "Greece","Hungary","Ireland","Italy","Latvia",
+                  "Lithuania","Luxembourg","Malta","Netherlands",
+                  "Poland","Portugal","Slovakia","Slovenia","Spain","Sweden"
 ];
 
 const seniorityLevels = [
@@ -14,16 +14,15 @@ const seniorityLevels = [
   "Senior",
 ];
 
-const Filters = ({ onChange, onJobsFetched}) => {
+const Filters = ({ onChange, onJobsFetched, setLoading }) => {
   const [location, setLocation] = useState("");
   const [seniority, setSeniority] = useState("");
   const [salary, setSalary] = useState("");
-  const [match, setMatch] = useState("");
   const [error, setError] = useState("");
 
   const handleChange = () => {
     if (onChange) {
-      onChange({ location, seniority, salary, match });
+      onChange({ location, seniority, salary }); 
     }
   };
 
@@ -32,6 +31,7 @@ const Filters = ({ onChange, onJobsFetched}) => {
     if (location) params.location = location;
     if (seniority) params.seniority = seniority;
     if (salary) params.salary = parseInt(salary, 10);
+    if (setLoading) setLoading(true);
     try {
       console.log("Searching with params:", params);
       const res = await fetch("http://localhost:3000/get-jobs", {
@@ -55,6 +55,8 @@ const Filters = ({ onChange, onJobsFetched}) => {
     } catch (err) {
       setError("Error fetching jobs!");
       setTimeout(() => setError(""), 2000);
+    } finally {
+      if (setLoading) setLoading(false);
     }
   };
 
@@ -99,26 +101,7 @@ const Filters = ({ onChange, onJobsFetched}) => {
           onChange={e => { setSalary(e.target.value); handleChange(); }}
         />
       </div>
-
-      <div className="flex flex-col justify-start basis-48">
-        <label className="block mb-1 font-semibold text-gray-700 text-left">Minimum Match (%)</label>
-        <select
-          className="border rounded px-3 py-2 w-full text-left"
-          value={match}
-          onChange={e => {
-            setMatch(e.target.value);
-            handleChange();
-          }}
-        >
-          <option value=""></option>
-          {[...Array(8)].map((_, i) => {
-            const val = 50 + i * 5;
-            return (
-              <option key={val} value={val}>{val}%</option>
-            );
-          })}
-        </select>
-      </div>
+ 
       <div className="flex flex-col justify-end basis-48">
         <button
           className="mt-6 px-4 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700 transition w-full"
