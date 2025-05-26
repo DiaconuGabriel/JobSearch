@@ -76,7 +76,7 @@ const JobCard = ({ job }) => (
         </a>
       </div>
     </div>
-    <div className="mt-2 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: job.snippet }} />
+    <div className="mt-2 text-gray-700 text-sm break-words" dangerouslySetInnerHTML={{ __html: job.snippet }} />
     <div className="text-xs text-gray-400 mt-2">
       Source: {job.source} &middot; Updated: {job.updated && job.updated.slice(0, 10)}
     </div>
