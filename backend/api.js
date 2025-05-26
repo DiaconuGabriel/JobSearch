@@ -24,12 +24,12 @@ const emailPass = process.env.EMAIL_PASS;
 const gemini = new GeminiApi(process.env.AI_API_KEY);
 
 const app = express();
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST'],
+// app.use(cors({
+//     origin: '*',
+//     methods: ['GET', 'POST'],
 
-    credentials: false,
-}));
+//     credentials: false,
+// }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'build')));
 
@@ -384,7 +384,7 @@ app.get("/get-logo", async (req, res) => {
     }
 });
 
-app.get('/', (req, res) => {
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
