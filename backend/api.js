@@ -383,7 +383,7 @@ app.get("/get-logo", async (req, res) => {
     }
 });
 
-app.get('*', (req, res) => {
+app.get(/^\/(?!register$|login$|upload-pdf$|user-profile$|update-username$|update-password$|delete-account$|forgot-password$|delete-reset-token$|validate-token$|validate-reset-token$|get-jobs$|get-logo$).*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
