@@ -67,7 +67,7 @@ const LoginForm = () => {
           <label className="font-semibold text-gray-700 font-poppins text-lg">
             Password
           </label>
-          <Link to="/forgot-password" className="text-s text-blue-600 font-medium no-underline font-poppins">
+          <Link to="/forgot-password-page" className="text-s text-blue-600 font-medium no-underline font-poppins">
             Forgot password?
           </Link>
         </div>
@@ -100,7 +100,7 @@ const LoginForm = () => {
       </form>
       <div className="text-center text-base font-poppins">
         Don’t have an account?{" "}
-        <Link to="/register" className="text-blue-600 no-underline font-semibold font-poppins">
+        <Link to="/register-page" className="text-blue-600 no-underline font-semibold font-poppins">
           Register here!
         </Link>
       </div>
