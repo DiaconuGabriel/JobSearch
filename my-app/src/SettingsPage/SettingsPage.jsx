@@ -39,7 +39,7 @@ const SettingsPage = () => {
     }, [message]);
     
     useEffect(() => {
-        fetch("http://localhost:3000/user-profile", {
+        fetch("https://jobsearch-n4zw.onrender.com/user-profile", {
             headers: {
                 Authorization: "Bearer " + localStorage.getItem("token"),
             },
@@ -61,7 +61,7 @@ const SettingsPage = () => {
             return;
         }
         try {
-            const res = await fetch("http://localhost:3000/update-username", {
+            const res = await fetch("https://jobsearch-n4zw.onrender.com/update-username", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -92,7 +92,7 @@ const SettingsPage = () => {
             return;
         }
         try {
-            const res = await fetch("http://localhost:3000/update-password", {
+            const res = await fetch("https://jobsearch-n4zw.onrender.com/update-password", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -120,7 +120,7 @@ const SettingsPage = () => {
 
     const handleConfirmDelete = async () => {
         try {
-            const res = await fetch("http://localhost:3000/delete-account", {
+            const res = await fetch("https://jobsearch-n4zw.onrender.com/delete-account", {
                 method: "POST",
                 headers: {
                     Authorization: "Bearer " + localStorage.getItem("token"),
@@ -158,7 +158,7 @@ const SettingsPage = () => {
         setMessage("");
         setIsAnalyzing(true);
 
-        fetch("http://localhost:3000/upload-pdf", {
+        fetch("https://jobsearch-n4zw.onrender.com/upload-pdf", {
             method: "POST",
             body: formData,
             headers: {

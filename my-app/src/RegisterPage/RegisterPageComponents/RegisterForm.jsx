@@ -18,7 +18,7 @@ const RegisterForm = () => {
     e.preventDefault();
     setMessage("");
     try {
-      const res = await fetch("http://localhost:3000/register", {
+      const res = await fetch("https://jobsearch-n4zw.onrender.com/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),

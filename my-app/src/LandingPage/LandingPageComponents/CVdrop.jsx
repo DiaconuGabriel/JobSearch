@@ -15,7 +15,7 @@ const CVdrop = () => {
   }, [error]);
 
   useEffect(() => {
-    fetch("http://localhost:3000/user-profile", {
+    fetch("https://jobsearch-n4zw.onrender.com/user-profile", {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token"),
       },
@@ -70,7 +70,7 @@ const CVdrop = () => {
       const formData = new FormData();
       formData.append("pdf", file);
 
-      const uploadRes = await fetch("http://localhost:3000/upload-pdf", {
+      const uploadRes = await fetch("https://jobsearch-n4zw.onrender.com/upload-pdf", {
         method: "POST",
         body: formData,
         headers: {

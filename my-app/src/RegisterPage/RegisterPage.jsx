@@ -9,7 +9,7 @@ const RegisterPage = () => {
   useEffect(() => {
       const token = localStorage.getItem("token");
       if (token) {
-        fetch("http://localhost:3000/validate-token", {
+        fetch("https://jobsearch-n4zw.onrender.com/validate-token", {
           headers: { Authorization: "Bearer " + token },
         })
           .then((res) => res.json())

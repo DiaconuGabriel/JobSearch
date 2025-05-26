@@ -34,7 +34,7 @@ const Filters = ({ onChange, onJobsFetched, setLoading }) => {
     if (setLoading) setLoading(true);
     try {
       console.log("Searching with params:", params);
-      const res = await fetch("http://localhost:3000/get-jobs", {
+      const res = await fetch("https://jobsearch-n4zw.onrender.com/get-jobs", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

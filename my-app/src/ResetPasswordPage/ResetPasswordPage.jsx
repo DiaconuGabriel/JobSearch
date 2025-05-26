@@ -17,7 +17,7 @@ const ResetPasswordPage = () => {
       setCriticalError(true);
       return;
     }
-    fetch("http://localhost:3000/validate-reset-token", {
+    fetch("https://jobsearch-n4zw.onrender.com/validate-reset-token", {
       method: "POST",
       headers: {
         Authorization: "Bearer " + reset_token,
@@ -45,7 +45,7 @@ const ResetPasswordPage = () => {
     setMessage("");
     setMessageType("");
     try {
-      const res = await fetch("http://localhost:3000/update-password", {
+      const res = await fetch("https://jobsearch-n4zw.onrender.com/update-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -55,7 +55,7 @@ const ResetPasswordPage = () => {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        await fetch("http://localhost:3000/delete-reset-token", {
+        await fetch("https://jobsearch-n4zw.onrender.com/delete-reset-token", {
           method: "POST",
           headers: {
             Authorization: "Bearer " + reset_token,

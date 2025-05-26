@@ -50,7 +50,7 @@ const JobCard = ({ job }) => (
     <div className="flex flex-row justify-between items-center gap-4">
       <div className="flex flex-col items-center min-w-[70px]">
         <img
-          src={`http://localhost:3000/get-logo?company=${encodeURIComponent(job.company)}&source=${encodeURIComponent(job.source)}`}
+          src={`https://jobsearch-n4zw.onrender.com/get-logo?company=${encodeURIComponent(job.company)}&source=${encodeURIComponent(job.source)}`}
           alt={job.company}
           className="w-12 h-12 object-contain rounded mb-2 border"
           onError={e => { e.target.src = 'https://placehold.co/40x40?text=?'; }}
