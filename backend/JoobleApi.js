@@ -1,4 +1,5 @@
-class JoobleApi {
+class joobleApi {
+
     constructor(apiKey) {
         this.apiKey = apiKey;
         this.apiUrl = `https://jooble.org/api/${this.apiKey}`;
@@ -24,4 +25,4 @@ class JoobleApi {
     }
 }
 
-module.exports = JoobleApi;
+module.exports = joobleApi;
