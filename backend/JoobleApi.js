@@ -1,4 +1,4 @@
-class joobleApi {
+class JoobleApi {
 
     constructor(apiKey) {
         this.apiKey = apiKey;
@@ -25,4 +25,4 @@ class joobleApi {
     }
 }
 
-module.exports = joobleApi;
+module.exports = JoobleApi;
