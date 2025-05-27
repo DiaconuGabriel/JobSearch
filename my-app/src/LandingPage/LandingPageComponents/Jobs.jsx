@@ -14,12 +14,12 @@ function calculateMatchPercentage(keywordsWithScores, snippet, location, title, 
   let maxScore = 0;
 
   keywordsWithScores.forEach(({ word, score }) => {
-    maxScore += score * 1.5;
-    if (titleText.includes(word)) totalScore += score * 1.5;
+    maxScore += score;
+    if (titleText.includes(word)) totalScore += score;
     else if (snippetText.includes(word)) totalScore += score;
     // console.log(`locationText: ${locationText}, actlocationText: ${actlocationText}`);
     if (actlocationText && locationText.includes(actlocationText)) {
-      totalScore += score * 2;
+      totalScore += score * 1.5;
     }
   });
 
