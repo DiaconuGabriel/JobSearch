@@ -19,6 +19,8 @@ function calculateMatchPercentage(keywordsWithScores, snippet, location, title, 
     }
   });
 
+  const percentScore = maxScore > 0 ? (matchedScore / maxScore) * 70 : 0;
+
   let seniorityBonus = 0;
   seniorityWithScores.forEach(({ word, score }) => {
     if (titleText.includes(word)) {
@@ -28,10 +30,9 @@ function calculateMatchPercentage(keywordsWithScores, snippet, location, title, 
 
   let locationBonus = 0;
   if (actlocationText && locationText.includes(actlocationText)) {
-    locationBonus = 10;
+    locationBonus = 30;
   }
 
-  const percentScore = maxScore > 0 ? (matchedScore / maxScore) * 100 : 0;
   const finalScore = Math.min(100, Math.round(percentScore + seniorityBonus + locationBonus));
   return finalScore;
 }
