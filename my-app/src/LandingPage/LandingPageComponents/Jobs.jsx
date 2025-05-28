@@ -11,8 +11,8 @@ function calculateMatchPercentage(keywordsWithScores, snippet, location, title, 
   const actlocationText = actlocation ? actlocation.toLowerCase() : "";
 
   let matchedScore = 0;
-  let matchedKeywords = 0;
   let maxScore = 0;
+  let matchedKeywords = 0;
   keywordsWithScores.forEach(({ word, score }) => {
     maxScore += score;
     if (titleText.includes(word) || snippetText.includes(word)) {
@@ -21,31 +21,22 @@ function calculateMatchPercentage(keywordsWithScores, snippet, location, title, 
     }
   });
 
+  const percentScore = maxScore > 0 ? matchedScore / maxScore : 0;
+  const percentMatches = keywordsWithScores.length > 0 ? matchedKeywords / keywordsWithScores.length : 0;
+
   let seniorityBonus = 0;
-  let maxSeniorityBonus = 0;
-  seniorityWithScores.forEach(({ word, score }) => {
-    maxSeniorityBonus += score;
-    if (titleText.includes(word)) seniorityBonus += score;
-    else if (snippetText.includes(word)) seniorityBonus += Math.round(score * 0.5);
+  seniorityWithScores.forEach(({ word }) => {
+    if (titleText.includes(word)) seniorityBonus += 2.5;
+    else if (snippetText.includes(word)) seniorityBonus += 1;
   });
 
   let locationBonus = 0;
-  let maxLocationBonus = 10;
   if (actlocationText && locationText.includes(actlocationText)) {
-    locationBonus = 10;
+    locationBonus = 5;
   }
 
-  const percentScore = maxScore > 0 ? (matchedScore / maxScore) : 0;
-  const percentMatches = keywordsWithScores.length > 0 ? (matchedKeywords / keywordsWithScores.length) : 0;
-
-  let combinedPercent = (percentScore + percentMatches) / 2;
-
-  const totalBonus = seniorityBonus + locationBonus;
-  const totalMaxBonus = maxSeniorityBonus + maxLocationBonus;
-  const bonusPercent = totalMaxBonus > 0 ? (totalBonus / totalMaxBonus) : 0;
-
-  const finalScore = Math.round((combinedPercent * 0.8 + bonusPercent * 0.2) * 100);
-  return Math.min(100, finalScore);
+  let combined = ((percentScore + percentMatches) / 2) * 100 + seniorityBonus + locationBonus;
+  return Math.min(100, Math.round(combined));
 }
 
 function removeDuplicates(jobs) {
