@@ -18,23 +18,22 @@ function calculateMatchPercentage(keywordsWithScores, snippet, location, title, 
       matchedScore += score;
     }
   });
-
-  const percentScore = maxScore > 0 ? (matchedScore / maxScore) * 70 : 0;
+  const percentScore = maxScore > 0 ? (matchedScore / maxScore) * 60 : 0;
 
   let seniorityBonus = 0;
-  seniorityWithScores.forEach(({ word, score }) => {
+  seniorityWithScores.forEach(({ word }) => {
     if (titleText.includes(word)) {
-      seniorityBonus = Math.max(seniorityBonus, score);
+      seniorityBonus = 20;
     }
   });
 
   let locationBonus = 0;
   if (actlocationText && locationText.includes(actlocationText)) {
-    locationBonus = 30;
+    locationBonus = 20;
   }
 
   const score = percentScore + seniorityBonus + locationBonus;
-  console.log(`Score before capping: ${score} (Percent: ${percentScore}, Seniority: ${seniorityBonus}, Location: ${locationBonus})`);
+  console.log(`Percentage score: ${percentScore}, Seniority bonus: ${seniorityBonus}, Location bonus: ${locationBonus}`);
   const finalScore = Math.min(100, Math.round(score));
   return finalScore;
 }
