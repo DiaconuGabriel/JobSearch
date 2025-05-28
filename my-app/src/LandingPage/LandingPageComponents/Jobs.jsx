@@ -10,29 +10,34 @@ function calculateMatchPercentage(keywordsWithScores, snippet, location, title, 
   const locationText = location ? location.toLowerCase() : "";
   const actlocationText = actlocation ? actlocation.toLowerCase() : "";
 
-  let totalScore = 0;
-  let maxScore = 0;
+  const keywords = keywordsWithScores.map(({ word }) => word);
 
-  keywordsWithScores.forEach(({ word, score }) => {
-    maxScore += score * 1.5;
-    if (titleText.includes(word)) totalScore += score * 1.5 ;
-    else if (snippetText.includes(word)) totalScore += score;
-    // console.log(`locationText: ${locationText}, actlocationText: ${actlocationText}`);
-    if (actlocationText && locationText.includes(actlocationText)) {
-      totalScore += score * 2;
+  let matchedKeywords = 0;
+  keywords.forEach(word => {
+    if (
+      titleText.includes(word) ||
+      snippetText.includes(word)
+    ) {
+      matchedKeywords++;
     }
   });
-  
-  // Bonus pentru senioritate
+
   let seniorityBonus = 0;
-  seniorityWithScores.forEach(({ word, score }) => {
-    if (titleText.includes(word)) seniorityBonus += score;
-    else if (snippetText.includes(word)) seniorityBonus += Math.round(score * 0.5);
+  seniorityWithScores.forEach(({ word }) => {
+    if (titleText.includes(word)) seniorityBonus += 2;
+    else if (snippetText.includes(word)) seniorityBonus += 1;
   });
 
-  // Scor final
-  const percentScore = maxScore > 0 ? Math.round((totalScore / maxScore) * 95) : 0;
-  return Math.min(95, percentScore + seniorityBonus);
+  let locationBonus = 0;
+  if (actlocationText && locationText.includes(actlocationText)) {
+    locationBonus = 5;
+  }
+
+  const rawScore = matchedKeywords + seniorityBonus + locationBonus;
+  const maxScore = keywords.length + (seniorityWithScores.length * 2) + 5;
+
+  const percentScore = maxScore > 0 ? Math.round((rawScore / maxScore) * 100) : 0;
+  return Math.min(100, percentScore);
 }
 
 function removeDuplicates(jobs) {
