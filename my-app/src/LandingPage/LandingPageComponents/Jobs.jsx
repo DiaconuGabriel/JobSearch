@@ -33,7 +33,9 @@ function calculateMatchPercentage(keywordsWithScores, snippet, location, title, 
     locationBonus = 30;
   }
 
-  const finalScore = Math.min(100, Math.round(percentScore + seniorityBonus + locationBonus));
+  const score = percentScore + seniorityBonus + locationBonus;
+  console.log(`Score before capping: ${score} (Percent: ${percentScore}, Seniority: ${seniorityBonus}, Location: ${locationBonus})`);
+  const finalScore = Math.min(100, Math.round(score));
   return finalScore;
 }
 
