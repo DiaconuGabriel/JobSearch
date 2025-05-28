@@ -26,13 +26,13 @@ function calculateMatchPercentage(keywordsWithScores, snippet, location, title, 
 
   let seniorityBonus = 0;
   seniorityWithScores.forEach(({ word }) => {
-    if (titleText.includes(word)) seniorityBonus += 2.5;
-    else if (snippetText.includes(word)) seniorityBonus += 1;
+    if (titleText.includes(word)) seniorityBonus += 20;
+    else if (snippetText.includes(word)) seniorityBonus += 2;
   });
 
   let locationBonus = 0;
   if (actlocationText && locationText.includes(actlocationText)) {
-    locationBonus = 5;
+    locationBonus = 200;
   }
 
   let combined = ((percentScore + percentMatches) / 2) * 100 + seniorityBonus + locationBonus;
