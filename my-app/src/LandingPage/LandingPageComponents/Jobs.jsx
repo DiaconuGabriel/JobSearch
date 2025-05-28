@@ -10,34 +10,42 @@ function calculateMatchPercentage(keywordsWithScores, snippet, location, title, 
   const locationText = location ? location.toLowerCase() : "";
   const actlocationText = actlocation ? actlocation.toLowerCase() : "";
 
-  const keywords = keywordsWithScores.map(({ word }) => word);
-
+  let matchedScore = 0;
   let matchedKeywords = 0;
-  keywords.forEach(word => {
-    if (
-      titleText.includes(word) ||
-      snippetText.includes(word)
-    ) {
+  let maxScore = 0;
+  keywordsWithScores.forEach(({ word, score }) => {
+    maxScore += score;
+    if (titleText.includes(word) || snippetText.includes(word)) {
+      matchedScore += score;
       matchedKeywords++;
     }
   });
 
   let seniorityBonus = 0;
-  seniorityWithScores.forEach(({ word }) => {
-    if (titleText.includes(word)) seniorityBonus += 2;
-    else if (snippetText.includes(word)) seniorityBonus += 1;
+  let maxSeniorityBonus = 0;
+  seniorityWithScores.forEach(({ word, score }) => {
+    maxSeniorityBonus += score;
+    if (titleText.includes(word)) seniorityBonus += score;
+    else if (snippetText.includes(word)) seniorityBonus += Math.round(score * 0.5);
   });
 
   let locationBonus = 0;
+  let maxLocationBonus = 10;
   if (actlocationText && locationText.includes(actlocationText)) {
-    locationBonus = 5;
+    locationBonus = 10;
   }
 
-  const rawScore = matchedKeywords + seniorityBonus + locationBonus;
-  const maxScore = keywords.length + (seniorityWithScores.length * 2) + 5;
+  const percentScore = maxScore > 0 ? (matchedScore / maxScore) : 0;
+  const percentMatches = keywordsWithScores.length > 0 ? (matchedKeywords / keywordsWithScores.length) : 0;
 
-  const percentScore = maxScore > 0 ? Math.round((rawScore / maxScore) * 100) : 0;
-  return Math.min(100, percentScore);
+  let combinedPercent = (percentScore + percentMatches) / 2;
+
+  const totalBonus = seniorityBonus + locationBonus;
+  const totalMaxBonus = maxSeniorityBonus + maxLocationBonus;
+  const bonusPercent = totalMaxBonus > 0 ? (totalBonus / totalMaxBonus) : 0;
+
+  const finalScore = Math.round((combinedPercent * 0.8 + bonusPercent * 0.2) * 100);
+  return Math.min(100, finalScore);
 }
 
 function removeDuplicates(jobs) {
