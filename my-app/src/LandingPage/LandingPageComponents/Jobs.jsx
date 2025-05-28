@@ -29,7 +29,7 @@ function calculateMatchPercentage(keywordsWithScores, snippet, location, title, 
 
   let locationBonus = 0;
   if (actlocationText && locationText.includes(actlocationText)) {
-    locationBonus = 20;
+    locationBonus = 40;
   }
 
   const score = percentScore + seniorityBonus + locationBonus;
