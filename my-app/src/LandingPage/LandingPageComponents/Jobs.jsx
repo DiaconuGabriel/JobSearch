@@ -22,14 +22,17 @@ function calculateMatchPercentage(keywordsWithScores, snippet, location, title, 
       totalScore += score * 2.5;
     }
   });
+
+  console.log(`Total score: ${totalScore}, Max score: ${maxScore}`);
   
   // Bonus pentru senioritate
   let seniorityBonus = 0;
   seniorityWithScores.forEach(({ word, score }) => {
-    if (titleText.includes(word)) seniorityBonus += score * 2;
+    if (titleText.includes(word)) seniorityBonus += score * 5;
     else if (snippetText.includes(word)) seniorityBonus += Math.round(score * 0.6);
   });
 
+  console.log(`Seniority bonus: ${seniorityBonus}`);
    // Scor final
   const percentScore = maxScore > 0 ? Math.round((totalScore / maxScore) * 95) : 0;
   return Math.min(95, percentScore + seniorityBonus);
