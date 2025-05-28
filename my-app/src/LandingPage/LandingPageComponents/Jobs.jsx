@@ -14,15 +14,15 @@ function calculateMatchPercentage(keywordsWithScores, snippet, location, title, 
   let maxScore = 0;
 
   keywordsWithScores.forEach(({ word, score }) => {
-    maxScore += score;
-    if (titleText.includes(word)) totalScore += score;
+    maxScore += score * 1.5;
+    if (titleText.includes(word)) totalScore += score * 1.5 ;
     else if (snippetText.includes(word)) totalScore += score;
     // console.log(`locationText: ${locationText}, actlocationText: ${actlocationText}`);
     if (actlocationText && locationText.includes(actlocationText)) {
-      totalScore += score * 1.5;
+      totalScore += score * 2;
     }
   });
-
+  
   // Bonus pentru senioritate
   let seniorityBonus = 0;
   seniorityWithScores.forEach(({ word, score }) => {
