@@ -20,8 +20,8 @@ JobSearch is a full-stack web application for job recommendations, built with Re
 ## Demo
 Live app: https://jobsearch-n4zw.onrender.com
 
-# Beggining with 15.06.2025 the Gemini Api will not work because the key will expire.
-# Some images of the app:
+## Beggining with 15.06.2025 the Gemini Api will not work because the key will expire.
+## Some images of the app:
 
 ![image](https://github.com/user-attachments/assets/677dbd84-82ea-4d4b-8530-8e64250357fa)
 ![image](https://github.com/user-attachments/assets/b50676e9-e702-44d8-9f39-cb034142fe7d)
